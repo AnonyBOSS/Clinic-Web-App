@@ -1,0 +1,389 @@
+/* Import Inter from Google Fonts for a professional UI */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+@import "tailwindcss/preflight";
+@tailwind utilities;
+
+/* Keep manual body typography (avoid @apply so PostCSS doesn't need utility resolution here) */
+html, body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Reset body margin to avoid browser defaults */
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+/* Global vertical rhythm
+   -------------------------------------------------- */
+main {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+@media (min-width: 1024px) {
+  main {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
+/* Give sections breathing room */
+section {
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+  border: none !important; /* from your previous tweak */
+}
+
+@media (min-width: 1024px) {
+  section {
+    margin-top: 3.5rem;
+    margin-bottom: 3.5rem;
+  }
+}
+
+/* Typography
+   -------------------------------------------------- */
+h1 {
+  font-weight: 800;
+  line-height: 1.08;
+  font-size: clamp(2.25rem, 3.5vw + 1rem, 3.75rem);
+  letter-spacing: -0.02em;
+  color: #0b1220;
+  margin-bottom: 1.25rem;
+}
+
+h2 {
+  font-weight: 700;
+  line-height: 1.12;
+  font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2.25rem);
+  color: #0b1220;
+  margin-top: 2rem;
+  margin-bottom: 0.9rem;
+}
+
+h3 {
+  font-weight: 600;
+  font-size: clamp(1.125rem, 1.6vw + 0.2rem, 1.5rem);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+p, li {
+  color: #475569;
+  line-height: 1.65;
+}
+
+/* Give paragraphs a bit of spacing by default */
+p + p {
+  margin-top: 0.75rem;
+}
+
+p + ul,
+p + ol {
+  margin-top: 0.75rem;
+}
+
+/* Lists */
+ul, ol {
+  padding-left: 1.25rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+/* Focus styles
+   -------------------------------------------------- */
+:focus { outline: none; }
+
+/* Visible focus ring for keyboard users */
+:focus-visible {
+  outline: 3px solid rgba(99,102,241,0.18);
+  outline-offset: 3px;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: none;
+  box-shadow: 0 6px 24px rgba(99,102,241,0.06), 0 0 0 4px rgba(99,102,241,0.12);
+  border-radius: .5rem;
+}
+
+.nav-link:focus-visible { box-shadow: 0 0 0 4px rgba(99,102,241,0.10); }
+
+/* Layout helpers
+   -------------------------------------------------- */
+.site-container {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Add vertical spacing between stacked site sections inside container */
+.site-container > section:not(:last-child) {
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .site-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .site-container > section:not(:last-child) {
+    margin-bottom: 4rem;
+  }
+}
+
+/* Buttons
+   -------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  transition: background-color .15s ease, transform .15s ease;
+  min-height: 40px;
+  gap: .6rem;
+  padding-inline: 0.9rem;
+}
+
+/* Space between adjacent buttons */
+.btn + .btn {
+  margin-left: 0.75rem;
+}
+
+.btn-primary {
+  background-color: var(--brand);
+  color: #fff;
+  padding: 0.6rem 1.15rem;
+  box-shadow: 0 10px 30px rgba(99,102,241,0.12);
+}
+.btn-primary:hover { background-color: #4f46e5; transform: translateY(-2px); }
+
+.btn-secondary {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+}
+.btn-secondary:hover { background: #f8fafc; transform: translateY(-1px); }
+
+.btn:disabled, .btn[disabled] {
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.btn-outline { background: transparent; border: 1px solid var(--border); }
+
+/* Add subtle hover uplift for primary buttons */
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0); }
+
+/* Cards & key components
+   -------------------------------------------------- */
+.card {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 16px 40px rgba(2,6,23,0.07);
+  border: 1px solid rgba(15,23,42,0.03);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem; /* give each card bottom margin */
+}
+
+/* For card grids, ensure consistent gap without relying on Tailwind only */
+.card-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* Hero graphic spacing */
+.hero-graphic {
+  border-radius: 1rem;
+  padding: 3rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .hero-graphic {
+    padding: 1.75rem;
+  }
+}
+
+.soft-border { border: 1px solid #f1f5f9; }
+
+/* Navigation and small helpers
+   -------------------------------------------------- */
+.site-header {
+  box-shadow: 0 6px 24px rgba(2,6,23,0.06);
+  backdrop-filter: saturate(120%) blur(6px);
+  background: rgba(255,255,255,0.8);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.site-header-inner {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.site-header .nav-link { padding: .5rem .75rem; }
+
+.nav-link {
+  color: #0f172a;
+  font-weight: 600;
+  padding: .25rem .5rem;
+  border-radius: .375rem;
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+.nav-link:hover { color: #4f46e5; background: rgba(79,70,229,0.04); }
+
+/* Table styles
+   -------------------------------------------------- */
+.table-wrapper {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.table-root {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: .75rem;
+  overflow: hidden;
+}
+
+.table-root thead th {
+  text-align: left;
+  padding: .9rem 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 1px solid rgba(15,23,42,0.04);
+  background: #fafafa;
+}
+.table-root tbody td {
+  padding: .9rem 1rem;
+  border-bottom: 1px solid rgba(15,23,42,0.03);
+}
+.table-root tbody tr:hover { background: #fbfdff; }
+
+/* Toast tweaks
+   -------------------------------------------------- */
+.toast-card {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  padding: .85rem 1rem;
+  border-radius: .6rem;
+  box-shadow: 0 18px 40px rgba(2,6,23,0.08);
+  border: 1px solid rgba(15,23,42,0.04);
+  max-width: 420px;
+  margin: 1rem; /* so it doesn't stick to edges */
+}
+.toast-success { background: #ecfdf5; color: #065f46; }
+.toast-error { background: #fff1f2; color: #881337; }
+.toast-info { background: #eff6ff; color: #1e3a8a; }
+.toast-card button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-weight: 700;
+}
+
+/* Footer visuals
+   -------------------------------------------------- */
+.site-footer {
+  background: linear-gradient(180deg, #0b1220 0%, #08101a 100%);
+  color: #c7d2fe;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+  margin-top: 3rem;
+}
+
+.site-footer .site-container {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.site-footer .links {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.site-footer a {
+  color: inherit;
+  opacity: .92;
+  text-decoration: none;
+}
+.site-footer a:hover {
+  color: #fff;
+  opacity: 1;
+}
+
+/* Theme tokens
+   -------------------------------------------------- */
+:root {
+  --bg: #f8fafc;
+  --muted: #64748b;
+  --brand: #6366f1;
+  --border: #eef2f7;
+}
+
+/* Normalize generic border utilities to a subtle color for a cleaner look */
+.border, .border-t, .border-b, .border-l, .border-r {
+  border-color: var(--border) !important;
+  border-width: 1px !important;
+}
+
+/* Reduce heavy borders between sections (many pages used border-t/b) */
+.border-t, .border-b {
+  border-color: var(--border) !important;
+}
+
+/* Chips / pills used for specializations
+   -------------------------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .9rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid rgba(14,165,233,0.06);
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.04);
+  transition: transform .15s ease, box-shadow .15s ease;
+  margin: 0.25rem 0.4rem 0.25rem 0; /* spacing between chips */
+}
+.chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(2,6,23,0.08);
+}
+.chip small { opacity: .9; }
+
+/* Feature card tuning: avoid heavy section dividers and create airy cards */
+section.py-24 .grid > div {
+  border: 1px solid rgba(226, 234, 240, 0.7);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  padding: 1.75rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 30px rgba(2,6,23,0.04);
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  section.py-24 .grid > div { padding: 1rem; }
+}

@@ -1,0 +1,239 @@
+"use client";
+
+import { useState } from 'react';
+import Link from 'next/link';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import Spinner from '../components/Spinner';
+
+export default function Home() {
+  const [searchSpecialization, setSearchSpecialization] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSearch = () => {
+    setLoading(true);
+    setTimeout(() => setLoading(false), 600);
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      <main>
+        {/* HERO SECTION */}
+        <section className="relative bg-linear-to-b from-slate-50 via-indigo-50/30 to-white pt-32 pb-32 lg:pt-40 lg:pb-40 overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-20 right-0 w-72 h-72 bg-indigo-100 rounded-full blur-3xl opacity-20"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-20"></div>
+
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+              <div className="space-y-8">
+                <div className="inline-flex items-center px-4 py-2.5 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold gap-2 hover:bg-indigo-200 transition-colors">
+                  <span className="text-lg">✓</span> Trusted by thousands of patients
+                </div>
+                <div className="space-y-6">
+                  <h1 className="text-5xl lg:text-7xl font-bold text-slate-900 leading-tight">
+                    Book your health appointment <span className="text-transparent bg-linear-to-r from-indigo-600 to-blue-600 bg-clip-text">today</span>
+                  </h1>
+                  <p className="text-lg text-slate-600 leading-relaxed max-w-xl">
+                    Find verified doctors and clinics in your area. Compare profiles, check real-time availability, and book instantly with zero hidden fees.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <Link href="/doctors" className="inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white px-8 py-4 text-base font-semibold hover:bg-indigo-700 shadow-xl hover:shadow-2xl transition-all duration-200 group">
+                    <span>Find a Doctor</span>
+                    <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                  </Link>
+                  <Link href="/clinics" className="inline-flex items-center justify-center rounded-xl border-2 border-slate-300 text-slate-700 px-8 py-4 text-base font-semibold hover:bg-slate-50 transition-all duration-200 group">
+                    <span>Find a Clinic</span>
+                    <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                  </Link>
+                </div>
+
+                <div className="flex gap-12 pt-8 border-t border-slate-200">
+                  <div className="space-y-2">
+                    <div className="text-3xl font-bold text-slate-900">500+</div>
+                    <p className="text-sm text-slate-600 font-medium">Expert Doctors</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-3xl font-bold text-slate-900">50+</div>
+                    <p className="text-sm text-slate-600 font-medium">Top Clinics</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-3xl font-bold text-slate-900">10k+</div>
+                    <p className="text-sm text-slate-600 font-medium">Happy Patients</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Search Card */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-linear-to-r from-indigo-200 to-blue-200 rounded-2xl blur-2xl opacity-40"></div>
+                <Card className="relative p-10 rounded-2xl shadow-2xl bg-white space-y-6 border border-slate-100">
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-bold text-slate-900">Find your doctor</h2>
+                    <p className="text-sm text-slate-500">Search and book in seconds</p>
+                  </div>
+                  <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="space-y-5">
+                    <div>
+                      <label htmlFor="specialization" className="block text-sm font-semibold text-slate-700 mb-3">Specialization</label>
+                      <input
+                        id="specialization"
+                        name="specialization"
+                        placeholder="e.g., Cardiology, Dentistry"
+                        value={searchSpecialization}
+                        onChange={(e) => setSearchSpecialization(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="city" className="block text-sm font-semibold text-slate-700 mb-3">Location</label>
+                      <input id="city" name="city" placeholder="City or area" className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all" />
+                    </div>
+
+                    <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white px-4 py-4 text-base font-semibold hover:bg-indigo-700 shadow-xl hover:shadow-2xl disabled:opacity-60 transition-all duration-200 mt-2 group">
+                      {loading ? <Spinner className="h-5 w-5" /> : (
+                        <>
+                          <span>Search Now</span>
+                          <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  <div className="pt-4 border-t border-slate-100 space-y-2">
+                    <p className="text-xs text-slate-600 font-medium">✓ No credit card required</p>
+                    <p className="text-xs text-slate-600 font-medium">✓ Instant confirmation</p>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* STATS SECTION */}
+        <section className="bg-white border-y border-slate-100 py-16">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+              <div className="space-y-3 p-4 rounded-xl hover:bg-slate-50 transition-colors">
+                <p className="text-4xl font-bold text-indigo-600">98%</p>
+                <p className="text-sm text-slate-600 font-medium">Patient Satisfaction</p>
+              </div>
+              <div className="space-y-3 p-4 rounded-xl hover:bg-slate-50 transition-colors">
+                <p className="text-4xl font-bold text-indigo-600">24h</p>
+                <p className="text-sm text-slate-600 font-medium">Avg Booking Time</p>
+              </div>
+              <div className="space-y-3 p-4 rounded-xl hover:bg-slate-50 transition-colors">
+                <p className="text-4xl font-bold text-indigo-600">100%</p>
+                <p className="text-sm text-slate-600 font-medium">Verified Doctors</p>
+              </div>
+              <div className="space-y-3 p-4 rounded-xl hover:bg-slate-50 transition-colors">
+                <p className="text-4xl font-bold text-indigo-600">24/7</p>
+                <p className="text-sm text-slate-600 font-medium">Customer Support</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* WHY CHOOSE US */}
+        <section className="py-24 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8">
+            <div className="text-center space-y-6 mb-16">
+              <h2 className="text-4xl lg:text-5xl font-bold text-slate-900">Why choose us?</h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Industry-leading platform trusted by healthcare professionals and patients worldwide</p>
+            </div>
+
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { icon: '🔐', title: 'Secure & Private', desc: 'Your health data is encrypted and protected with bank-level security.' },
+                { icon: '⚡', title: 'Instant Booking', desc: 'Real-time availability and instant confirmation in seconds.' },
+                { icon: '💰', title: 'Transparent Pricing', desc: 'No surprises. See all fees upfront before booking.' },
+                { icon: '✓', title: 'Verified Doctors', desc: 'Every healthcare professional is verified and credentialed.' },
+                { icon: '📱', title: 'Easy to Use', desc: 'Book on mobile, web, or call our team anytime.' },
+                { icon: '🌍', title: 'Wide Network', desc: 'Thousands of clinics and specialists across the region.' }
+              ].map((feature, idx) => (
+                <div key={idx} className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-200 group border border-slate-100 hover:border-indigo-200">
+                  <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">{feature.icon}</div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">{feature.title}</h3>
+                  <p className="text-slate-600 leading-relaxed">{feature.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SPECIALIZATIONS */}
+        <section className="py-24 bg-white">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8">
+            <div className="text-center space-y-6 mb-16">
+              <h2 className="text-4xl lg:text-5xl font-bold text-slate-900">Browse by Specialization</h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Find doctors in your preferred medical specialty</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-3">
+              {['🫀 Cardiology', '🦷 Dentistry', '👶 Pediatrics', '🧠 Psychiatry', '🦴 Orthopedics', '👁️ Ophthalmology', '👨‍⚕️ General Practice', '🩺 Internal Medicine'].map((s) => (
+                <Link key={s} href={`/doctors?specialization=${s}`} className="inline-flex items-center rounded-full bg-white text-slate-700 px-6 py-3 text-sm font-semibold hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 border border-slate-200 hover:border-indigo-300 shadow-sm hover:shadow-md">
+                  {s}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* TESTIMONIALS */}
+        <section className="py-24 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8">
+            <div className="text-center space-y-6 mb-16">
+              <h2 className="text-4xl lg:text-5xl font-bold text-slate-900">Patient Stories</h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Real feedback from real patients</p>
+            </div>
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { name: 'Sarah Ahmed', title: 'Verified Patient', text: 'Found a specialist in 10 minutes. The entire booking process took less than 2 minutes. Best healthcare experience I\'ve had!' },
+                { name: 'Mohammad Hassan', title: 'Verified Patient', text: 'Finally, a platform that actually makes sense. No confusion, no hidden charges, and the doctors are all highly qualified.' },
+                { name: 'Fatima Al-Rashid', title: 'Verified Patient', text: 'Transparent pricing, instant confirmation, and professional service. Highly recommend to anyone looking for quality healthcare.' }
+              ].map((testimonial, idx) => (
+                <div key={idx} className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all duration-200 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-400">★</span>
+                    ))}
+                  </div>
+                  <p className="text-slate-700 leading-relaxed mb-6">"{testimonial.text}"</p>
+                  <div className="pt-6 border-t border-slate-200">
+                    <p className="font-semibold text-slate-900">{testimonial.name}</p>
+                    <p className="text-sm text-slate-500">{testimonial.title}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA SECTION */}
+        <section className="py-24 bg-linear-to-r from-indigo-600 via-blue-600 to-indigo-700 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 right-10 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+            <div className="absolute bottom-10 left-10 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+          </div>
+          <div className="max-w-4xl mx-auto px-4 lg:px-8 text-center relative z-10">
+            <div className="space-y-8">
+              <h2 className="text-4xl lg:text-5xl font-bold text-white">Ready to book your appointment?</h2>
+              <p className="text-lg text-indigo-100 max-w-2xl mx-auto">Join thousands of patients who've already found the perfect healthcare provider. Secure your spot today.</p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/doctors" className="inline-flex items-center justify-center rounded-xl bg-white text-indigo-600 px-10 py-4 text-base font-semibold hover:bg-indigo-50 shadow-xl hover:shadow-2xl transition-all duration-200 group">
+                  <span>Find Doctor</span>
+                  <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                </Link>
+                <Link href="/clinics" className="inline-flex items-center justify-center rounded-xl border-2 border-white text-white px-10 py-4 text-base font-semibold hover:bg-indigo-700 transition-all duration-200 group">
+                  <span>Find Clinic</span>
+                  <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}

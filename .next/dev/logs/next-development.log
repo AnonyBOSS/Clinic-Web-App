@@ -1,0 +1,30 @@
+[00:00:02.113] Server  LOG      ✓ Ready in 1403ms
+[00:00:04.539] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:15.469] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:16.467] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:17.090] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:17.538] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:17.833] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:18.188] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:39.297] Server  LOG      ✓ Compiled in 87ms
+[00:01:05.107] Server  LOG      ✓ Compiled in 70ms
+[00:02:22.397] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\.next\dev\server\chunks\[root-of-the-server]__7b761688._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.414] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.425] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\.next\dev\server\chunks\8f516_4f8e563c._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.430] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\node_modules\next\dist\server\base-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.436] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\node_modules\next\dist\server\next-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.440] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\node_modules\next\dist\server\dev\next-dev-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.441] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\node_modules\next\dist\trace\trace.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.443] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\node_modules\next\dist\server\lib\router-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.445] Server  ERROR   C:\Users\ahmad\Downloads\ClincsManagmentSystem\node_modules\next\dist\server\lib\start-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:02:22.448] Server  ERROR   Register error: ValidationError: email: Please provide a valid email
+[00:10:41.605] Server  LOG      ✓ Compiled in 86ms
+[00:10:49.921] Server  LOG      ✓ Compiled in 76ms
+[00:11:01.006] Server  LOG      ✓ Compiled in 62ms
+[00:21:21.727] Server  LOG      ✓ Compiled in 135ms
+[00:21:37.973] Server  LOG      ✓ Compiled in 28ms
+[00:21:46.974] Server  LOG      ✓ Compiled in 118ms
+[00:23:53.386] Server  LOG      ✓ Compiled in 91ms
+[00:24:33.208] Server  LOG      ✓ Compiled in 65ms
+[00:28:28.777] Browser ERROR   Error loading doctors: {}
+[00:28:28.777] Browser ERROR   Error loading doctors: {}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/ahmad/Downloads/ClincsManagmentSystem/app/layout.tsx"],"sourcesContent":["import type { Metadata } from 'next';\r\nimport './globals.css';\r\nimport Layout from '../components/Layout';\r\n\r\nexport const metadata: Metadata = {\r\n  title: 'Clinics Booking System',\r\n  description: 'Book appointments with doctors at your favorite clinics',\r\n};\r\n\r\nexport default function RootLayout({ children }: { children: React.ReactNode }) {\r\n  return (\r\n    <html lang=\"en\">\r\n      <body>\r\n        <Layout>{children}</Layout>\r\n      </body>\r\n    </html>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;;;;AAEA;;;;AAEO,MAAM,WAAqB;IAChC,OAAO;IACP,aAAa;AACf;AAEe,SAAS,WAAW,EAAE,QAAQ,EAAiC;IAC5E,qBACE,oRAAC;QAAK,MAAK;kBACT,cAAA,oRAAC;sBACC,cAAA,oRAAC,sKAAM;0BAAE;;;;;;;;;;;;;;;;AAIjB"}},
+    {"offset": {"line": 51, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/ahmad/Downloads/ClincsManagmentSystem/node_modules/next/src/server/route-modules/app-page/vendored/rsc/react-jsx-dev-runtime.ts"],"sourcesContent":["module.exports = (\n  require('../../module.compiled') as typeof import('../../module.compiled')\n).vendored['react-rsc']!.ReactJsxDevRuntime\n"],"names":["module","exports","require","vendored","ReactJsxDevRuntime"],"mappings":"AAAAA,OAAOC,OAAO,GACZC,QAAQ,4JACRC,QAAQ,CAAC,YAAY,CAAEC,kBAAkB","ignoreList":[0]}}]
+}

@@ -1,0 +1,13 @@
+var R=require("../../chunks/ssr/[turbopack]_runtime.js")("server/app/_not-found/page.js")
+R.c("server/chunks/ssr/[root-of-the-server]__bc2eebbe._.js")
+R.c("server/chunks/ssr/8f516_next_dist_b6569a2b._.js")
+R.c("server/chunks/ssr/8f516_next_dist_esm_build_templates_app-page_8457cb4c.js")
+R.c("server/chunks/ssr/[root-of-the-server]__a58be710._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__b8d228ad._.js")
+R.c("server/chunks/ssr/8f516_next_dist_1d109b18._.js")
+R.c("server/chunks/ssr/Downloads_ClincsManagmentSystem_f636c51a._.js")
+R.c("server/chunks/ssr/8f516_next_dist_client_components_0ac0b0f6._.js")
+R.c("server/chunks/ssr/8f516_next_dist_client_components_builtin_forbidden_37ae06d5.js")
+R.c("server/chunks/ssr/6c7f9_ClincsManagmentSystem__next-internal_server_app__not-found_page_actions_c346ec9d.js")
+R.m(90820)
+module.exports=R.m(90820).exports
