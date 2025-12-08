@@ -1,53 +1,37 @@
-import mongoose, { Schema, Document } from 'mongoose';
+// models/Slot.ts
+import mongoose, { Schema, Document, Model } from "mongoose";
+
+export type SlotStatus = "AVAILABLE" | "BOOKED";
 
 export interface ISlot extends Document {
-  doctor_id: mongoose.Types.ObjectId;
-  clinic_id: mongoose.Types.ObjectId;
-  room_id: mongoose.Types.ObjectId;
-  date: Date;
-  time: string;
-  status: 'available' | 'booked';
-  createdAt: Date;
-  updatedAt: Date;
+  doctor: mongoose.Types.ObjectId;
+  clinic: mongoose.Types.ObjectId;
+  room: mongoose.Types.ObjectId;
+  date: string; // "YYYY-MM-DD"
+  time: string; // "HH:MM"
+  status: SlotStatus;
 }
 
 const SlotSchema = new Schema<ISlot>(
   {
-    doctor_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Doctor',
-      required: true,
-    },
-    clinic_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Clinic',
-      required: true,
-    },
-    room_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Room',
-      required: true,
-    },
-    date: {
-      type: Date,
-      required: true,
-    },
-    time: {
-      type: String,
-      required: true,
-    },
+    doctor: { type: Schema.Types.ObjectId, ref: "Doctor", required: true },
+    clinic: { type: Schema.Types.ObjectId, ref: "Clinic", required: true },
+    room: { type: Schema.Types.ObjectId, ref: "Room", required: true },
+    date: { type: String, required: true }, // validated at app level
+    time: { type: String, required: true },
     status: {
       type: String,
-      enum: ['available', 'booked'],
-      default: 'available',
-    },
+      enum: ["AVAILABLE", "BOOKED"],
+      default: "AVAILABLE"
+    }
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Create compound index for faster availability searches
-SlotSchema.index({ doctor_id: 1, clinic_id: 1, date: 1, status: 1 });
+SlotSchema.index(
+  { doctor: 1, clinic: 1, room: 1, date: 1, time: 1 },
+  { unique: true }
+); // no duplicate time slots for same doctor/room/clinic
 
-export default mongoose.models.Slot || mongoose.model<ISlot>('Slot', SlotSchema);
+export const Slot: Model<ISlot> =
+  mongoose.models.Slot || mongoose.model<ISlot>("Slot", SlotSchema);

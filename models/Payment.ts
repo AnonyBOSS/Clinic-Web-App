@@ -1,61 +1,43 @@
-import mongoose, { Schema, Document } from 'mongoose';
+// models/Payment.ts
+import mongoose, { Schema, Document, Model } from "mongoose";
+import type { PaymentStatus } from "./Appointment";
 
 export interface IPayment extends Document {
-  appointment_id: mongoose.Types.ObjectId;
-  patient_id: mongoose.Types.ObjectId;
-  doctor_id: mongoose.Types.ObjectId;
+  appointment: mongoose.Types.ObjectId;
+  patient: mongoose.Types.ObjectId;
+  doctor: mongoose.Types.ObjectId;
   amount: number;
-  method: 'cash' | 'card';
-  transaction_id?: string;
-  status: 'pending' | 'paid' | 'refunded' | 'failed';
+  method: "CASH" | "CARD";
+  transaction_id: string;
+  status: PaymentStatus;
   timestamp: Date;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 const PaymentSchema = new Schema<IPayment>(
   {
-    appointment_id: {
+    appointment: {
       type: Schema.Types.ObjectId,
-      ref: 'Appointment',
-      required: true,
+      ref: "Appointment",
+      required: true
     },
-    patient_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Patient',
-      required: true,
-    },
-    doctor_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Doctor',
-      required: true,
-    },
-    amount: {
-      type: Number,
-      required: true,
-    },
-    method: {
-      type: String,
-      enum: ['cash', 'card'],
-      required: true,
-    },
-    transaction_id: String,
+    patient: { type: Schema.Types.ObjectId, ref: "Patient", required: true },
+    doctor: { type: Schema.Types.ObjectId, ref: "Doctor", required: true },
+    amount: { type: Number, required: true },
+    method: { type: String, enum: ["CASH", "CARD"], required: true },
+    transaction_id: { type: String, required: true, trim: true },
     status: {
       type: String,
-      enum: ['pending', 'paid', 'refunded', 'failed'],
-      default: 'pending',
+      enum: ["PAID", "REFUNDED", "FAILED"],
+      required: true
     },
-    timestamp: {
-      type: Date,
-      default: Date.now,
-    },
+    timestamp: { type: Date, required: true }
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Create index for reporting
-PaymentSchema.index({ timestamp: -1 });
+PaymentSchema.index({ timestamp: 1 });
+PaymentSchema.index({ doctor: 1, timestamp: 1 });
+PaymentSchema.index({ patient: 1, timestamp: 1 });
 
-export default mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
+export const Payment: Model<IPayment> =
+  mongoose.models.Payment || mongoose.model<IPayment>("Payment", PaymentSchema);

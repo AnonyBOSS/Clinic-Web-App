@@ -1,42 +1,32 @@
-import mongoose, { Schema, Document } from 'mongoose';
+// models/Room.ts
+import mongoose, { Schema, Document, Model } from "mongoose";
+
+export type RoomStatus = "AVAILABLE" | "MAINTENANCE";
 
 export interface IRoom extends Document {
-  clinic_id: mongoose.Types.ObjectId;
   room_number: string;
-  type: string;
-  status: 'available' | 'maintenance' | 'occupied';
-  createdAt: Date;
-  updatedAt: Date;
+  type?: string;
+  status: RoomStatus;
+  clinic: mongoose.Types.ObjectId;
 }
 
 const RoomSchema = new Schema<IRoom>(
   {
-    clinic_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Clinic',
-      required: true,
-    },
-    room_number: {
-      type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-      required: true,
-      enum: ['exam', 'surgery', 'consultation', 'waiting'],
-    },
+    room_number: { type: String, required: true, trim: true },
+    type: { type: String, trim: true },
     status: {
       type: String,
-      enum: ['available', 'maintenance', 'occupied'],
-      default: 'available',
+      enum: ["AVAILABLE", "MAINTENANCE"],
+      default: "AVAILABLE"
     },
+    clinic: {
+      type: Schema.Types.ObjectId,
+      ref: "Clinic",
+      required: true
+    }
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Create index for clinic_id for faster queries
-RoomSchema.index({ clinic_id: 1 });
-
-export default mongoose.models.Room || mongoose.model<IRoom>('Room', RoomSchema);
+export const Room: Model<IRoom> =
+  mongoose.models.Room || mongoose.model<IRoom>("Room", RoomSchema);

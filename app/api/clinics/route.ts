@@ -1,31 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db/connection';
-import Clinic from '@/models/Clinic';
+// app/api/clinics/route.ts
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/db/connection";
+import { Clinic } from "@/models/Clinic";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await connectDB();
-    const clinics = await Clinic.find({}).lean();
-    return NextResponse.json(clinics, { status: 200 });
-  } catch (error) {
-    console.error('Error fetching clinics:', error);
+    const clinics = await Clinic.find().sort({ name: 1 }).exec();
+
+    console.log("[CLINICS_GET]", clinics.length, "clinics found");
+
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { success: true, data: clinics },
+      { status: 200 }
     );
-  }
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    await connectDB();
-    const data = await req.json();
-    const clinic = await Clinic.create(data);
-    return NextResponse.json(clinic, { status: 201 });
   } catch (error) {
-    console.error('Error creating clinic:', error);
+    console.error("[CLINICS_GET_ERROR]", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: "Internal server error." },
       { status: 500 }
     );
   }

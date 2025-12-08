@@ -1,40 +1,44 @@
-import mongoose from 'mongoose';
+// lib/db/connection.ts
+import mongoose, { Mongoose } from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/clinics-booking';
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+  throw new Error("Please define MONGODB_URI in .env.local");
 }
 
-let cached = global as any;
-
-if (!cached.mongoose) {
-  cached.mongoose = { conn: null, promise: null };
+interface MongooseCache {
+  conn: Mongoose | null;
+  promise: Promise<Mongoose> | null;
 }
 
-export async function connectDB() {
-  if (cached.mongoose.conn) {
-    return cached.mongoose.conn;
-  }
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongooseCache: MongooseCache | undefined;
+}
 
-  if (!cached.mongoose.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
+const globalCache = global._mongooseCache || { conn: null, promise: null };
 
-    cached.mongoose.promise = mongoose
-      .connect(MONGODB_URI, opts)
-      .then((mongoose) => {
-        return mongoose;
+if (!global._mongooseCache) {
+  global._mongooseCache = globalCache;
+}
+
+export async function connectDB(): Promise<Mongoose> {
+  if (globalCache.conn) return globalCache.conn;
+
+  if (!globalCache.promise) {
+    globalCache.promise = mongoose
+      .connect(MONGODB_URI, {
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 5000
+      })
+      .then((m) => m)
+      .catch((err) => {
+        globalCache.promise = null;
+        throw err;
       });
   }
 
-  try {
-    cached.mongoose.conn = await cached.mongoose.promise;
-  } catch (e) {
-    cached.mongoose.promise = null;
-    throw e;
-  }
-
-  return cached.mongoose.conn;
+  globalCache.conn = await globalCache.promise;
+  return globalCache.conn;
 }

@@ -1,87 +1,66 @@
-import mongoose, { Schema, Document } from 'mongoose';
+// models/Appointment.ts
+import mongoose, { Schema, Document, Model } from "mongoose";
+
+export type AppointmentStatus =
+  | "BOOKED"
+  | "CONFIRMED"
+  | "CANCELLED"
+  | "COMPLETED";
+
+export type PaymentStatus = "PAID" | "REFUNDED" | "FAILED";
+
+export interface IEmbeddedPayment {
+  amount: number;
+  method: "CASH" | "CARD";
+  transaction_id: string;
+  status: PaymentStatus;
+  timestamp: Date;
+}
 
 export interface IAppointment extends Document {
-  patient_id: mongoose.Types.ObjectId;
-  doctor_id: mongoose.Types.ObjectId;
-  clinic_id: mongoose.Types.ObjectId;
-  room_id: mongoose.Types.ObjectId;
-  slot_id: mongoose.Types.ObjectId;
-  status: 'booked' | 'confirmed' | 'cancelled' | 'completed';
+  patient: mongoose.Types.ObjectId;
+  doctor: mongoose.Types.ObjectId;
+  clinic: mongoose.Types.ObjectId;
+  room: mongoose.Types.ObjectId;
+  slot: mongoose.Types.ObjectId;
+  status: AppointmentStatus;
   notes?: string;
-  payment: {
-    amount: number;
-    method: 'cash' | 'card';
-    transaction_id?: string;
-    status: 'pending' | 'paid' | 'refunded' | 'failed';
-    timestamp: Date;
-  };
-  createdAt: Date;
-  updatedAt: Date;
+  payment: IEmbeddedPayment; // mandatory embedded payment
 }
+
+const EmbeddedPaymentSchema = new Schema<IEmbeddedPayment>(
+  {
+    amount: { type: Number, required: true },
+    method: { type: String, enum: ["CASH", "CARD"], required: true },
+    transaction_id: { type: String, required: true, trim: true },
+    status: {
+      type: String,
+      enum: ["PAID", "REFUNDED", "FAILED"],
+      required: true
+    },
+    timestamp: { type: Date, required: true }
+  },
+  { _id: false }
+);
 
 const AppointmentSchema = new Schema<IAppointment>(
   {
-    patient_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Patient',
-      required: true,
-    },
-    doctor_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Doctor',
-      required: true,
-    },
-    clinic_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Clinic',
-      required: true,
-    },
-    room_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Room',
-      required: true,
-    },
-    slot_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Slot',
-      required: true,
-      unique: true,
-    },
+    patient: { type: Schema.Types.ObjectId, ref: "Patient", required: true },
+    doctor: { type: Schema.Types.ObjectId, ref: "Doctor", required: true },
+    clinic: { type: Schema.Types.ObjectId, ref: "Clinic", required: true },
+    room: { type: Schema.Types.ObjectId, ref: "Room", required: true },
+    slot: { type: Schema.Types.ObjectId, ref: "Slot", required: true },
     status: {
       type: String,
-      enum: ['booked', 'confirmed', 'cancelled', 'completed'],
-      default: 'booked',
+      enum: ["BOOKED", "CONFIRMED", "CANCELLED", "COMPLETED"],
+      default: "BOOKED"
     },
-    notes: String,
-    payment: {
-      amount: {
-        type: Number,
-        required: true,
-      },
-      method: {
-        type: String,
-        enum: ['cash', 'card'],
-        required: true,
-      },
-      transaction_id: String,
-      status: {
-        type: String,
-        enum: ['pending', 'paid', 'refunded', 'failed'],
-        default: 'pending',
-      },
-      timestamp: {
-        type: Date,
-        default: Date.now,
-      },
-    },
+    notes: { type: String, trim: true },
+    payment: { type: EmbeddedPaymentSchema, required: true }
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Create indexes for faster queries
-AppointmentSchema.index({ doctor_id: 1, createdAt: -1 });
-AppointmentSchema.index({ patient_id: 1, createdAt: -1 });
-
-export default mongoose.models.Appointment || mongoose.model<IAppointment>('Appointment', AppointmentSchema);
+export const Appointment: Model<IAppointment> =
+  mongoose.models.Appointment ||
+  mongoose.model<IAppointment>("Appointment", AppointmentSchema);

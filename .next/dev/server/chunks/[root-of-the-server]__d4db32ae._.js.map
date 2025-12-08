@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 46, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/ahmad/Downloads/ClincsManagmentSystem/app/api/auth/logout/route.ts"],"sourcesContent":["import { NextResponse } from 'next/server';\r\n\r\nexport async function POST() {\r\n  const response = NextResponse.json({ success: true });\r\n\r\n  // clear the auth cookie\r\n  response.cookies.set('auth_token', '', {\r\n    httpOnly: true,\r\n    secure: process.env.NODE_ENV === 'production',\r\n    sameSite: 'lax',\r\n    path: '/',\r\n    maxAge: 0,\r\n  });\r\n\r\n  return response;\r\n}\r\n"],"names":[],"mappings":";;;;AAAA;;AAEO,eAAe;IACpB,MAAM,WAAW,sLAAY,CAAC,IAAI,CAAC;QAAE,SAAS;IAAK;IAEnD,wBAAwB;IACxB,SAAS,OAAO,CAAC,GAAG,CAAC,cAAc,IAAI;QACrC,UAAU;QACV,QAAQ,oDAAyB;QACjC,UAAU;QACV,MAAM;QACN,QAAQ;IACV;IAEA,OAAO;AACT"}}]
-}

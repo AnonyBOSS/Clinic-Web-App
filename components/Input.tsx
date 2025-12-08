@@ -1,27 +1,22 @@
-import React from 'react';
+"use client";
 
-type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
-  textarea?: boolean;
-  className?: string;
-  /** id of an error element to link via aria-describedby */
-  errorId?: string;
-  /** indicate the input is invalid */
-  invalid?: boolean;
-};
+import * as React from "react";
 
-const baseClass = 'form-input';
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
 
-export default function Input({ textarea, className = '', errorId, invalid, ...props }: InputProps) {
-  const ariaProps: Record<string, any> = {};
-  if (invalid) ariaProps['aria-invalid'] = true;
-  if (errorId) ariaProps['aria-describedby'] = errorId;
-
-  if (textarea) {
-    // @ts-ignore allow textarea props
-    const invalidClass = invalid ? 'ring-1 ring-red-200 border-red-400' : '';
-    return <textarea className={`${baseClass} ${invalidClass} ${className}`} {...ariaProps} {...(props as any)} />;
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <input
+        ref={ref}
+        className={`block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-400 ${className ?? ""}`}
+        {...props}
+      />
+    );
   }
+);
 
-  const invalidClass = invalid ? 'ring-1 ring-red-200 border-red-400' : '';
-  return <input className={`${baseClass} ${invalidClass} ${className}`} {...ariaProps} {...props} />;
-}
+Input.displayName = "Input";
+
+export default Input;

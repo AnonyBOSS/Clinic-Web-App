@@ -1,7 +1,19 @@
-import React from 'react';
+import * as React from "react";
 
-export default function Card({ children, className = '', ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode; className?: string }) {
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  as?: React.ElementType;
+}
+
+export default function Card({
+  as: Comp = "div",
+  className,
+  ...props
+}: CardProps) {
   return (
-    <div role="group" className={`card ${className}`} {...props}>{children}</div>
+    <Comp
+      className={`card p-4 sm:p-5 ${className ?? ""}`}
+      {...props}
+    />
   );
 }

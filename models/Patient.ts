@@ -1,75 +1,82 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import bcrypt from 'bcryptjs';
+// models/Patient.ts
+import mongoose, { Schema, Document, Model } from "mongoose";
+import bcrypt from "bcryptjs";
+
+export interface IEmergencyContact {
+  name: string;
+  phone: string;
+  relation?: string;
+}
+
+export interface IInsuranceInfo {
+  provider?: string;
+  policyNumber?: string;
+}
 
 export interface IPatient extends Document {
   full_name: string;
   phone: string;
   email: string;
   password: string;
-  insurance_info?: string;
+  insurance?: IInsuranceInfo;
   medical_summary?: string;
-  emergency_contact?: {
-    name: string;
-    phone: string;
-    relation: string;
-  };
-  createdAt: Date;
-  updatedAt: Date;
-  comparePassword(password: string): Promise<boolean>;
+  emergency_contact?: IEmergencyContact;
+  comparePassword(candidate: string): Promise<boolean>;
 }
+
+const EmergencyContactSchema = new Schema<IEmergencyContact>(
+  {
+    name: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+    relation: { type: String, trim: true }
+  },
+  { _id: false }
+);
+
+const InsuranceInfoSchema = new Schema<IInsuranceInfo>(
+  {
+    provider: { type: String, trim: true },
+    policyNumber: { type: String, trim: true }
+  },
+  { _id: false }
+);
 
 const PatientSchema = new Schema<IPatient>(
   {
-    full_name: {
-      type: String,
-      required: [true, 'Please provide a full name'],
-    },
-    phone: {
-      type: String,
-      required: [true, 'Please provide a phone number'],
-    },
+    full_name: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
     email: {
       type: String,
-      required: [true, 'Please provide an email'],
+      required: true,
       unique: true,
       lowercase: true,
-      match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
+      trim: true
     },
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
-      minlength: 6,
-      select: false,
+      required: true,
+      select: false
     },
-    insurance_info: {
-      type: String,
-    },
-    medical_summary: {
-      type: String,
-    },
-    emergency_contact: {
-      name: String,
-      phone: String,
-      relation: String,
-    },
+    insurance: { type: InsuranceInfoSchema },
+    medical_summary: { type: String, trim: true },
+    emergency_contact: { type: EmergencyContactSchema }
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Hash password before saving
-PatientSchema.pre('save', async function (this: IPatient, next: any) {
-  if (!this.isModified('password')) {
-    return;
-  }
+// ✅ FIXED: use promise-style hook (NO next argument)
+PatientSchema.pre("save", async function (this: IPatient) {
+  if (!this.isModified("password")) return;
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Method to compare password
-PatientSchema.methods.comparePassword = async function (enteredPassword: string) {
-  return await bcrypt.compare(enteredPassword, this.password);
+// Instance method for comparing passwords
+PatientSchema.methods.comparePassword = async function (candidate: string) {
+  const patient = this as IPatient;
+  return bcrypt.compare(candidate, patient.password);
 };
 
-export default mongoose.models.Patient || mongoose.model<IPatient>('Patient', PatientSchema);
+export const Patient: Model<IPatient> =
+  mongoose.models.Patient || mongoose.model<IPatient>("Patient", PatientSchema);

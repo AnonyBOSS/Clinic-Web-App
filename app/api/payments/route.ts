@@ -1,93 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db/connection';
-import Payment from '@/models/Payment';
-import Appointment from '@/models/Appointment';
-
-export async function POST(req: NextRequest) {
-  try {
-    await connectDB();
-
-    const {
-      appointment_id,
-      amount,
-      method,
-      transaction_id,
-    } = await req.json();
-
-    if (!appointment_id || !amount || !method) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    const appointment = await Appointment.findById(appointment_id);
-
-    if (!appointment) {
-      return NextResponse.json(
-        { error: 'Appointment not found' },
-        { status: 404 }
-      );
-    }
-
-    // Create payment record
-    const payment = await Payment.create({
-      appointment_id,
-      patient_id: appointment.patient_id,
-      doctor_id: appointment.doctor_id,
-      amount,
-      method,
-      transaction_id,
-      status: 'paid',
-      timestamp: new Date(),
-    });
-
-    // Update appointment's embedded payment
-    appointment.payment = {
-      amount,
-      method,
-      transaction_id: transaction_id || '',
-      status: 'paid',
-      timestamp: new Date(),
-    };
-
-    await appointment.save();
-
-    return NextResponse.json(
-      {
-        message: 'Payment processed successfully',
-        payment,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('Error processing payment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
+// app/api/payments/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { connectDB } from "@/lib/db/connection";
+import { getAuthUserFromRequest } from "@/lib/auth-request";
+import { Payment } from "@/models/Payment";
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const { searchParams } = new URL(req.url);
-    const appointment_id = searchParams.get('appointment_id');
-
-    let query: any = {};
-
-    if (appointment_id) {
-      query.appointment_id = appointment_id;
+    const authUser = getAuthUserFromRequest(req);
+    if (!authUser) {
+      return NextResponse.json(
+        { success: false, error: "Not authenticated." },
+        { status: 401 }
+      );
     }
 
-    const payments = await Payment.find(query).lean();
+    const { searchParams } = new URL(req.url);
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
 
-    return NextResponse.json(payments, { status: 200 });
-  } catch (error) {
-    console.error('Error fetching payments:', error);
+    const filter: any = {};
+    if (authUser.role === "DOCTOR") {
+      filter.doctor = authUser.id;
+    } else {
+      filter.patient = authUser.id;
+    }
+
+    if (from || to) {
+      filter.timestamp = {};
+      if (from) filter.timestamp.$gte = new Date(from);
+      if (to) filter.timestamp.$lte = new Date(to);
+    }
+
+    const payments = await Payment.find(filter)
+      .sort({ timestamp: -1 })
+      .exec();
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: true, data: payments },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("[PAYMENTS_GET_ERROR]", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error." },
       { status: 500 }
     );
   }

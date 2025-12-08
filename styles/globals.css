@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* your other styles */
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+.site-container {
+  @apply container mx-auto;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-sm border border-slate-200/60;
+}
