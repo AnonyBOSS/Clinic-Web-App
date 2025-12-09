@@ -194,7 +194,7 @@ export default function HomePage() {
                     Keep your contact details up to date so clinics can reach
                     you easily.
                   </p>
-                  <Link href="/dashboard">
+                  <Link href="/profile">
                     <Button size="sm" variant="outline" className="mt-2">
                       Go to profile
                     </Button>

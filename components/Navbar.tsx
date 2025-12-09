@@ -92,6 +92,11 @@ export default function Navbar() {
               <span className="hidden text-xs text-slate-600 sm:inline">
                 {user.full_name} · {user.role.toLowerCase()}
               </span>
+              {user && (
+              <Link href="/profile" className="hidden text-xs text-slate-600 hover:text-slate-900 sm:inline">
+                Profile
+              </Link>
+              )}
               <Button
                 size="sm"
                 variant="outline"
