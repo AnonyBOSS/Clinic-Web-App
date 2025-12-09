@@ -48,21 +48,24 @@ export async function GET(req: NextRequest) {
     }
 
     if (date) {
-      // exact date (old behavior)
       filter.date = date;
     } else if (fromDate && toDate) {
       filter.date = { $gte: fromDate, $lte: toDate };
     } else {
-      // doctor-only: all future slots
       const today = todayStrUTC();
       filter.date = { $gte: today };
     }
 
-    const slots = await Slot.find(filter)
+    const rawSlots = await Slot.find(filter)
       .sort({ date: 1, time: 1 })
       .populate("clinic", "name address")
       .populate("room", "room_number status")
       .exec();
+
+    // Filter out slots whose rooms are in maintenance
+    const slots = rawSlots.filter(
+      (s: any) => !s.room || s.room.status !== "MAINTENANCE"
+    );
 
     return NextResponse.json(
       { success: true, data: slots },

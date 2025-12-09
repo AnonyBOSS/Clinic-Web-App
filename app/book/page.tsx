@@ -97,7 +97,7 @@ export default function BookPage() {
     load();
   }, []);
 
-  // 🔧 Helper: fetch slots for given filters
+  // Helper: fetch slots for given filters
   async function fetchSlotsFor(
     doctorId: string,
     clinicId?: string,
@@ -141,7 +141,7 @@ export default function BookPage() {
     }
   }
 
-  // 2) Manual search button (still works, just more flexible)
+  // Manual search button (still works)
   async function loadSlots(e?: FormEvent) {
     if (e) e.preventDefault();
     await fetchSlotsFor(
@@ -151,7 +151,7 @@ export default function BookPage() {
     );
   }
 
-  // 3) Book appointment for selected slot
+  // Book appointment for selected slot
   async function handleBook() {
     setError(null);
     setSuccess(null);
@@ -208,6 +208,8 @@ export default function BookPage() {
     );
   }
 
+  const selectedSlot = slots.find((s) => s._id === selectedSlotId);
+
   return (
     <PageShell
       title="Book an appointment"
@@ -263,7 +265,7 @@ export default function BookPage() {
                   setSelectedRoomId(null);
 
                   if (value) {
-                    // ✅ doctor-only: show all future slots for this doctor
+                    // doctor-only: show all future slots for this doctor
                     fetchSlotsFor(value);
                   }
                 }}
@@ -390,6 +392,11 @@ export default function BookPage() {
                       <span className="font-medium">
                         {slot.date} · {slot.time}
                       </span>
+                      {slot.clinic?.name && (
+                        <span className="mt-1 text-[10px] text-slate-500">
+                          {slot.clinic.name}
+                        </span>
+                      )}
                       <span className="mt-1 text-[10px] text-slate-500">
                         Room {slot.room.room_number}
                       </span>
@@ -414,7 +421,7 @@ export default function BookPage() {
               {selectedClinicId
                 ? clinics.find((c) => c._id === selectedClinicId)?.name ??
                   "Selected clinic"
-                : "Any clinic"}
+                : selectedSlot?.clinic?.name ?? "Any clinic"}
             </p>
             <p>
               <span className="font-medium text-slate-800">
@@ -429,7 +436,7 @@ export default function BookPage() {
               <span className="font-medium text-slate-800">
                 Date:
               </span>{" "}
-              {date || "Any date"}
+              {date || selectedSlot?.date || "Any date"}
             </p>
             <p>
               <span className="font-medium text-slate-800">
@@ -441,8 +448,8 @@ export default function BookPage() {
               <span className="font-medium text-slate-800">
                 Selected time:
               </span>{" "}
-              {selectedSlotId
-                ? slots.find((s) => s._id === selectedSlotId)?.time ?? "Selected"
+              {selectedSlot
+                ? `${selectedSlot.date} · ${selectedSlot.time}`
                 : "Not selected"}
             </p>
           </div>

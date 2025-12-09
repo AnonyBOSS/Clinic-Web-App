@@ -2,16 +2,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/connection";
 import { getAuthUserFromRequest } from "@/lib/auth-request";
-
-import "@/models/Clinic";
-import "@/models/Room";
-import "@/models/Doctor";
-import "@/models/Patient";
-import "@/models/Slot";
-
 import { Slot } from "@/models/Slot";
 import { Appointment } from "@/models/Appointment";
 import { Payment } from "@/models/Payment";
+import { Room } from "@/models/Room";
+import "@/models/Clinic";
+import "@/models/Doctor";
+import "@/models/Patient";
 
 export async function GET(req: NextRequest) {
   try {
@@ -83,7 +80,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "doctorId, clinicId, roomId, slotId, amount and method are required."
+          error:
+            "doctorId, clinicId, roomId, slotId, amount and method are required."
+        },
+        { status: 400 }
+      );
+    }
+
+    // Ensure the room is not under maintenance
+    const room = await Room.findById(roomId).exec();
+    if (!room) {
+      return NextResponse.json(
+        { success: false, error: "Selected room does not exist." },
+        { status: 400 }
+      );
+    }
+    if (room.status === "MAINTENANCE") {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Selected room is currently under maintenance. Please choose another slot."
         },
         { status: 400 }
       );
