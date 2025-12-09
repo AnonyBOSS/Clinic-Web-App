@@ -1,10 +1,12 @@
 {
-  "/api/auth/login/route": "app/api/auth/login/route.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/page": "app/page.js",
+  "/(auth)/register/page": "app/(auth)/register/page.js",
   "/api/auth/me/route": "app/api/auth/me/route.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/api/appointments/route": "app/api/appointments/route.js",
-  "/page": "app/page.js",
-  "/api/doctors/schedule/route": "app/api/doctors/schedule/route.js",
-  "/doctor/schedule/page": "app/doctor/schedule/page.js"
+  "/book/page": "app/book/page.js",
+  "/api/doctors/route": "app/api/doctors/route.js",
+  "/api/clinics/route": "app/api/clinics/route.js",
+  "/api/slots/available/route": "app/api/slots/available/route.js"
 }
