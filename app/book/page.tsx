@@ -69,7 +69,6 @@ export default function BookPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // 1) Load clinics and doctors once
   useEffect(() => {
     async function load() {
       try {
@@ -97,7 +96,6 @@ export default function BookPage() {
     load();
   }, []);
 
-  // Helper: fetch slots for given filters
   async function fetchSlotsFor(
     doctorId: string,
     clinicId?: string,
@@ -141,7 +139,6 @@ export default function BookPage() {
     }
   }
 
-  // Manual search button (still works)
   async function loadSlots(e?: FormEvent) {
     if (e) e.preventDefault();
     await fetchSlotsFor(
@@ -151,13 +148,33 @@ export default function BookPage() {
     );
   }
 
-  // Book appointment for selected slot
   async function handleBook() {
     setError(null);
     setSuccess(null);
 
-    if (!selectedSlotId || !selectedRoomId) {
+    if (!selectedSlotId) {
       setError("Please select a time slot first.");
+      return;
+    }
+
+    if (!selectedDoctorId) {
+      setError("Please select a doctor.");
+      return;
+    }
+
+    const slot = slots.find((s) => s._id === selectedSlotId);
+    if (!slot) {
+      setError("Selected slot is no longer available.");
+      return;
+    }
+
+    const clinicIdToUse =
+      selectedClinicId || slot.clinic?._id || "";
+    const roomIdToUse =
+      selectedRoomId || slot.room?._id || "";
+
+    if (!clinicIdToUse || !roomIdToUse) {
+      setError("Please select a valid time slot.");
       return;
     }
 
@@ -175,8 +192,8 @@ export default function BookPage() {
         credentials: "include",
         body: JSON.stringify({
           doctorId: selectedDoctorId,
-          clinicId: selectedClinicId,
-          roomId: selectedRoomId,
+          clinicId: clinicIdToUse,
+          roomId: roomIdToUse,
           slotId: selectedSlotId,
           notes: notes || undefined,
           amount: amountNumber,
@@ -229,7 +246,6 @@ export default function BookPage() {
                 onChange={(e) => {
                   const value = e.target.value;
                   setSelectedClinicId(value);
-                  // re-filter slots if doctor already chosen
                   if (selectedDoctorId) {
                     fetchSlotsFor(
                       selectedDoctorId,
@@ -265,7 +281,6 @@ export default function BookPage() {
                   setSelectedRoomId(null);
 
                   if (value) {
-                    // doctor-only: show all future slots for this doctor
                     fetchSlotsFor(value);
                   }
                 }}
@@ -382,6 +397,10 @@ export default function BookPage() {
                       onClick={() => {
                         setSelectedSlotId(slot._id);
                         setSelectedRoomId(slot.room._id);
+                        setDate(slot.date);
+                        if (slot.clinic?._id) {
+                          setSelectedClinicId(slot.clinic._id);
+                        }
                       }}
                       className={`flex flex-col rounded-xl border px-3 py-2 text-left text-xs transition ${
                         selected
@@ -408,7 +427,7 @@ export default function BookPage() {
           </div>
         </Card>
 
-        {/* Right: small summary */}
+        {/* Right: summary */}
         <Card className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-900">
             Appointment summary

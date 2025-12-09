@@ -4,29 +4,27 @@ import { connectDB } from "@/lib/db/connection";
 import { getAuthUserFromRequest } from "@/lib/auth-request";
 import { Doctor } from "@/models/Doctor";
 import { Slot } from "@/models/Slot";
-import { Room } from "@/models/Room";
 
-function parseDateStr(value: string): Date | null {
-  const d = new Date(value + "T00:00:00.000Z");
+type GenerateBody = {
+  fromDate?: string; // "YYYY-MM-DD"
+  toDate?: string;   // "YYYY-MM-DD"
+};
+
+function toDateOnly(str: string): Date | null {
+  const d = new Date(str + "T00:00:00Z");
   return isNaN(d.getTime()) ? null : d;
 }
 
 function formatDate(d: Date): string {
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
-function timeToMinutes(time: string): number {
-  const [h, m] = time.split(":").map((n) => parseInt(n, 10));
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map((n) => parseInt(n, 10));
   return h * 60 + m;
-}
-
-function minutesToTime(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -41,28 +39,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = (await req.json().catch(() => null)) as {
-      fromDate?: string;
-      toDate?: string;
-    } | null;
+    const body = (await req.json().catch(() => null)) as GenerateBody | null;
 
-    const fromDateStr = body?.fromDate;
-    const toDateStr = body?.toDate;
+    const today = new Date();
+    const todayStr = formatDate(today);
 
-    if (!fromDateStr || !toDateStr) {
+    let fromStr = body?.fromDate || todayStr;
+    let toStr = body?.toDate || formatDate(
+      new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
+    );
+
+    const from = toDateOnly(fromStr);
+    const to = toDateOnly(toStr);
+
+    if (!from || !to || from > to) {
       return NextResponse.json(
-        { success: false, error: "fromDate and toDate are required." },
+        { success: false, error: "Invalid fromDate/toDate range." },
         { status: 400 }
       );
     }
 
-    const from = parseDateStr(fromDateStr);
-    const to = parseDateStr(toDateStr);
-    if (!from || !to || from > to) {
-      return NextResponse.json(
-        { success: false, error: "Invalid date range." },
-        { status: 400 }
-      );
+    // Do not allow generating slots entirely in the past
+    if (from < toDateOnly(todayStr)!) {
+      fromStr = todayStr;
     }
 
     const doctor = await Doctor.findById(auth.id).exec();
@@ -73,88 +72,72 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const activeSchedule = doctor.schedule_days.filter(
-      (d) => d.isActive && d.clinic
-    );
-    if (activeSchedule.length === 0) {
+    const scheduleDays = doctor.schedule_days.filter((s: any) => s.isActive);
+    if (scheduleDays.length === 0) {
       return NextResponse.json(
         { success: false, error: "No active schedule days configured." },
         { status: 400 }
       );
     }
 
-    // Preload rooms by clinic for fallback when no specific room is set
-    const clinicIds = Array.from(
-      new Set(activeSchedule.map((d) => String(d.clinic)))
-    );
-    const rooms = await Room.find({ clinic: { $in: clinicIds } })
-      .select("_id clinic status")
-      .exec();
-
-    const roomsByClinic: Record<string, string | null> = {};
-    for (const cid of clinicIds) {
-      const firstAvailable = rooms.find(
-        (r) =>
-          String(r.clinic) === cid &&
-          (r.status === "AVAILABLE" || !r.status)
-      );
-      roomsByClinic[cid] = firstAvailable ? String(firstAvailable._id) : null;
-    }
+    const fromDate = toDateOnly(fromStr)!;
+    const toDate = toDateOnly(toStr)!;
 
     let createdCount = 0;
+    let current = new Date(fromDate.getTime());
 
-    for (
-      let d = new Date(from.getTime());
-      d <= to;
-      d.setUTCDate(d.getUTCDate() + 1)
-    ) {
-      const dayOfWeek = d.getUTCDay();
-      const dateStr = formatDate(d);
+    while (current <= toDate) {
+      const dateStr = formatDate(current);
+      const dayOfWeek = current.getUTCDay();
 
-      const daySchedules = activeSchedule.filter(
-        (s) => s.dayOfWeek === dayOfWeek
-      );
-      if (daySchedules.length === 0) continue;
+      for (const s of scheduleDays as any[]) {
+        if (s.dayOfWeek !== dayOfWeek) continue;
 
-      for (const s of daySchedules) {
-        const startMin = timeToMinutes(s.startTime);
-        const endMin = timeToMinutes(s.endTime);
-        const step = s.slotDurationMinutes;
-        if (!step || endMin <= startMin) continue;
+        const start = timeToMinutes(s.startTime);
+        const end = timeToMinutes(s.endTime);
+        let t = start;
 
-        const clinicId = String(s.clinic);
-        const roomId =
-          s.room?.toString() ?? roomsByClinic[clinicId] ?? null;
+        while (t + s.slotDurationMinutes <= end) {
+          const hour = Math.floor(t / 60);
+          const minute = t % 60;
+          const hh = String(hour).padStart(2, "0");
+          const mm = String(minute).padStart(2, "0");
+          const timeStr = `${hh}:${mm}`;
 
-        if (!roomId) continue;
-
-        for (let m = startMin; m + step <= endMin; m += step) {
-          const timeStr = minutesToTime(m);
-
-          try {
-            await Slot.create({
+          await Slot.findOneAndUpdate(
+            {
               doctor: doctor._id,
-              clinic: clinicId,
-              room: roomId,
+              clinic: s.clinic,
+              room: s.room,
               date: dateStr,
-              time: timeStr,
-              status: "AVAILABLE"
-            });
-            createdCount++;
-          } catch (err: any) {
-            if (err?.code === 11000) continue; // ignore duplicates
-            console.error("[SLOT_GENERATE_ERROR]", err);
-          }
+              time: timeStr
+            },
+            {
+              $setOnInsert: {
+                status: "AVAILABLE"
+              }
+            },
+            { upsert: true, new: true }
+          );
+
+          createdCount++;
+          t += s.slotDurationMinutes;
         }
       }
+
+      current = new Date(current.getTime() + 24 * 60 * 60 * 1000);
     }
 
     return NextResponse.json(
-      { success: true, data: { createdCount } },
-      { status: 200 }
+      {
+        success: true,
+        message: "Slots generated successfully.",
+        data: { createdCount }
+      },
+      { status: 201 }
     );
   } catch (error) {
-    console.error("[DOCTORS_SLOTS_GENERATE_ERROR]", error);
+    console.error("[DOCTOR_SLOTS_GENERATE_ERROR]", error);
     return NextResponse.json(
       { success: false, error: "Internal server error." },
       { status: 500 }

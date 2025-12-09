@@ -27,7 +27,7 @@ export default function Navbar() {
     try {
       const res = await fetch("/api/auth/me", {
         credentials: "include",
-        cache: "no-store", // avoid stale cached responses
+        cache: "no-store" // avoid stale cached responses
       });
 
       if (!res.ok) {
@@ -43,7 +43,7 @@ export default function Navbar() {
     }
   }
 
-  // ✅ Run on first load AND whenever the URL path changes
+  // Run on first load AND whenever the URL path changes
   useEffect(() => {
     setLoading(true);
     fetchMe();
@@ -55,14 +55,20 @@ export default function Navbar() {
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
+        cache: "no-store"
       });
     } catch {
       // ignore network error
     } finally {
-      // ✅ Immediately reflect logged-out state in Navbar
       setUser(null);
-      router.push("/");
-      router.refresh();
+
+      // If we're already on "/", force a reload so everything updates
+      if (typeof window !== "undefined" && pathname === "/") {
+        window.location.reload();
+      } else {
+        router.push("/");
+        router.refresh();
+      }
     }
   }
 
@@ -87,23 +93,22 @@ export default function Navbar() {
           </Link>
 
           {loading ? null : user ? (
-            // ✅ Logged in: show name + Logout
+            // Logged in
             <div className="flex items-center gap-3">
               {user && (
-              <Link href="/profile" className="hidden text-xs text-slate-600 hover:text-slate-900 sm:inline">
-                {user.full_name} · {user.role.toLowerCase()}
-              </Link>
+                <Link
+                  href="/profile"
+                  className="hidden text-xs text-slate-600 hover:text-slate-900 sm:inline"
+                >
+                  {user.full_name} · {user.role.toLowerCase()}
+                </Link>
               )}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleLogout}
-              >
+              <Button size="sm" variant="outline" onClick={handleLogout}>
                 Logout
               </Button>
             </div>
           ) : (
-            // ✅ Logged out: Login + Sign up
+            // Logged out
             <>
               <Link href="/login">
                 <Button variant="outline" size="sm">

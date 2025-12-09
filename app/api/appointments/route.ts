@@ -10,6 +10,16 @@ import "@/models/Clinic";
 import "@/models/Doctor";
 import "@/models/Patient";
 
+type BookBody = {
+  doctorId?: string;
+  clinicId?: string;
+  roomId?: string;
+  slotId?: string;
+  notes?: string;
+  amount?: number;
+  method?: "CASH" | "CARD";
+};
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -48,16 +58,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-type BookBody = {
-  doctorId?: string;
-  clinicId?: string;
-  roomId?: string;
-  slotId?: string;
-  notes?: string;
-  amount?: number;
-  method?: "CASH" | "CARD";
-};
-
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
@@ -87,7 +87,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure the room is not under maintenance
     const room = await Room.findById(roomId).exec();
     if (!room) {
       return NextResponse.json(
@@ -126,6 +125,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 🚫 Extra safety: prevent booking past slots
+    const slotDateTime = new Date(`${slot.date}T${slot.time}:00Z`);
+    if (isNaN(slotDateTime.getTime()) || slotDateTime <= new Date()) {
+      // revert the slot back to AVAILABLE just in case
+      await Slot.findByIdAndUpdate(slot._id, { status: "AVAILABLE" }).exec();
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Cannot book an appointment in the past."
+        },
+        { status: 400 }
+      );
+    }
+
     const paymentDetails = {
       amount,
       method,
@@ -134,7 +147,7 @@ export async function POST(req: NextRequest) {
       timestamp: new Date()
     };
 
-    // 2) Create appointment (with embedded payment)
+    // 2) Create appointment
     const appointment = await Appointment.create({
       patient: authUser.id,
       doctor: doctorId,
@@ -146,7 +159,7 @@ export async function POST(req: NextRequest) {
       payment: paymentDetails
     });
 
-    // 3) Create separate payment document for reporting
+    // 3) Separate payment record
     await Payment.create({
       appointment: appointment._id,
       patient: authUser.id,

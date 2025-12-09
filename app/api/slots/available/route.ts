@@ -2,11 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/connection";
 
-// ensure models are registered for populate()
 import "@/models/Room";
 import "@/models/Clinic";
 import "@/models/Doctor";
-
 import { Slot } from "@/models/Slot";
 
 function todayStrUTC(): string {
@@ -24,16 +22,13 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const doctorId = searchParams.get("doctorId");
     const clinicId = searchParams.get("clinicId");
-    const date = searchParams.get("date"); // single date
+    const date = searchParams.get("date");
     const fromDate = searchParams.get("fromDate");
     const toDate = searchParams.get("toDate");
 
     if (!doctorId) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "doctorId is required."
-        },
+        { success: false, error: "doctorId is required." },
         { status: 400 }
       );
     }
@@ -43,9 +38,7 @@ export async function GET(req: NextRequest) {
       status: "AVAILABLE"
     };
 
-    if (clinicId) {
-      filter.clinic = clinicId;
-    }
+    if (clinicId) filter.clinic = clinicId;
 
     if (date) {
       filter.date = date;
@@ -62,10 +55,19 @@ export async function GET(req: NextRequest) {
       .populate("room", "room_number status")
       .exec();
 
-    // Filter out slots whose rooms are in maintenance
-    const slots = rawSlots.filter(
-      (s: any) => !s.room || s.room.status !== "MAINTENANCE"
-    );
+    const now = new Date();
+
+    // Only future slots AND not maintenance room
+    const slots = rawSlots.filter((s: any) => {
+      if (!s.date || !s.time) return false;
+
+      const dt = new Date(`${s.date}T${s.time}:00Z`);
+      if (isNaN(dt.getTime()) || dt <= now) return false;
+
+      if (s.room && s.room.status === "MAINTENANCE") return false;
+
+      return true;
+    });
 
     return NextResponse.json(
       { success: true, data: slots },
