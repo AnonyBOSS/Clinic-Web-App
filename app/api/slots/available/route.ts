@@ -1,22 +1,28 @@
 // app/api/slots/available/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/connection";
+
+// ensure models exist for populate()
+import "@/models/Room";
+import "@/models/Clinic";
+import "@/models/Doctor";
+
 import { Slot } from "@/models/Slot";
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const { searchParams } = new URL(req.url);
 
+    const { searchParams } = new URL(req.url);
     const doctorId = searchParams.get("doctorId");
     const clinicId = searchParams.get("clinicId");
-    const date = searchParams.get("date");
+    const date = searchParams.get("date"); // YYYY-MM-DD
 
     if (!doctorId || !clinicId || !date) {
       return NextResponse.json(
         {
           success: false,
-          error: "doctorId, clinicId, and date (YYYY-MM-DD) are required."
+          error: "doctorId, clinicId and date are required query params."
         },
         { status: 400 }
       );

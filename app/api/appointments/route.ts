@@ -2,6 +2,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/connection";
 import { getAuthUserFromRequest } from "@/lib/auth-request";
+
+import "@/models/Clinic";
+import "@/models/Room";
+import "@/models/Doctor";
+import "@/models/Patient";
+import "@/models/Slot";
+
 import { Slot } from "@/models/Slot";
 import { Appointment } from "@/models/Appointment";
 import { Payment } from "@/models/Payment";
