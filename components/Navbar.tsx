@@ -27,7 +27,7 @@ export default function Navbar() {
     try {
       const res = await fetch("/api/auth/me", {
         credentials: "include",
-        cache: "no-store", // 👈 avoid stale cached responses
+        cache: "no-store", // avoid stale cached responses
       });
 
       if (!res.ok) {
@@ -43,8 +43,8 @@ export default function Navbar() {
     }
   }
 
+  // ✅ Run on first load AND whenever the URL path changes
   useEffect(() => {
-    // Run on first load AND whenever the URL path changes
     setLoading(true);
     fetchMe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,9 +57,10 @@ export default function Navbar() {
         credentials: "include",
       });
     } catch {
-      // ignore
+      // ignore network error
     } finally {
-      // After logout, cookie is gone; navigate and trigger a refetch via pathname effect
+      // ✅ Immediately reflect logged-out state in Navbar
+      setUser(null);
       router.push("/");
       router.refresh();
     }
@@ -100,7 +101,7 @@ export default function Navbar() {
               </Button>
             </div>
           ) : (
-            // ✅ Logged out: show Login + Sign up
+            // ✅ Logged out: Login + Sign up
             <>
               <Link href="/login">
                 <Button variant="outline" size="sm">
