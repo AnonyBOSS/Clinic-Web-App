@@ -41,6 +41,10 @@ type SlotItem = {
     room_number: string;
     status: "AVAILABLE" | "MAINTENANCE";
   };
+  clinic?: {
+    _id: string;
+    name: string;
+  };
 };
 
 export default function BookPage() {
@@ -93,45 +97,58 @@ export default function BookPage() {
     load();
   }, []);
 
-  // 2) Load slots when doctor, clinic and date selected
-  async function loadSlots(e?: FormEvent) {
-    if (e) e.preventDefault();
+  // 🔧 Helper: fetch slots for given filters
+  async function fetchSlotsFor(
+    doctorId: string,
+    clinicId?: string,
+    dateStr?: string
+  ) {
     setError(null);
     setSuccess(null);
     setSlots([]);
     setSelectedSlotId(null);
     setSelectedRoomId(null);
 
-    if (!selectedClinicId || !selectedDoctorId || !date) {
-      setError("Please select clinic, doctor and date first.");
+    if (!doctorId) {
+      setError("Please select a doctor first.");
       return;
     }
 
-    setLoadingSlots(true);
-    try {
-      const params = new URLSearchParams({
-        doctorId: selectedDoctorId,
-        clinicId: selectedClinicId,
-        date
-      });
+    const params = new URLSearchParams();
+    params.set("doctorId", doctorId);
+    if (clinicId) params.set("clinicId", clinicId);
+    if (dateStr) params.set("date", dateStr);
 
+    setLoadingSlots(true);
+
+    try {
       const res = await fetch(`/api/slots/available?${params.toString()}`, {
         credentials: "include"
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
         setError(data?.error ?? "Failed to load slots.");
         return;
       }
 
-      const data = await res.json();
-      setSlots(data.data as SlotItem[]);
+      setSlots((data?.data ?? []) as SlotItem[]);
     } catch {
       setError("Failed to load slots.");
     } finally {
       setLoadingSlots(false);
     }
+  }
+
+  // 2) Manual search button (still works, just more flexible)
+  async function loadSlots(e?: FormEvent) {
+    if (e) e.preventDefault();
+    await fetchSlotsFor(
+      selectedDoctorId,
+      selectedClinicId || undefined,
+      date || undefined
+    );
   }
 
   // 3) Book appointment for selected slot
@@ -207,9 +224,20 @@ export default function BookPage() {
               </label>
               <Select
                 value={selectedClinicId}
-                onChange={(e) => setSelectedClinicId(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedClinicId(value);
+                  // re-filter slots if doctor already chosen
+                  if (selectedDoctorId) {
+                    fetchSlotsFor(
+                      selectedDoctorId,
+                      value || undefined,
+                      date || undefined
+                    );
+                  }
+                }}
               >
-                <option value="">Select a clinic</option>
+                <option value="">Any clinic</option>
                 {clinics.map((c) => (
                   <option key={c._id} value={c._id}>
                     {c.name} – {c.address.city}
@@ -225,7 +253,20 @@ export default function BookPage() {
               </label>
               <Select
                 value={selectedDoctorId}
-                onChange={(e) => setSelectedDoctorId(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedDoctorId(value);
+                  setSelectedClinicId("");
+                  setDate("");
+                  setSlots([]);
+                  setSelectedSlotId(null);
+                  setSelectedRoomId(null);
+
+                  if (value) {
+                    // ✅ doctor-only: show all future slots for this doctor
+                    fetchSlotsFor(value);
+                  }
+                }}
               >
                 <option value="">Select a doctor</option>
                 {doctors.map((d) => (
@@ -247,7 +288,18 @@ export default function BookPage() {
               <Input
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setDate(value);
+
+                  if (selectedDoctorId) {
+                    fetchSlotsFor(
+                      selectedDoctorId,
+                      selectedClinicId || undefined,
+                      value || undefined
+                    );
+                  }
+                }}
               />
             </div>
 
@@ -293,10 +345,7 @@ export default function BookPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
-                type="submit"
-                isLoading={loadingSlots}
-              >
+              <Button type="submit" isLoading={loadingSlots}>
                 Search available slots
               </Button>
               {error && (
@@ -318,7 +367,7 @@ export default function BookPage() {
             ) : slots.length === 0 ? (
               <EmptyState
                 title="No available slots"
-                description="Try another date, doctor, or clinic."
+                description="Try another doctor, clinic, or date."
               />
             ) : (
               <div className="grid gap-2 sm:grid-cols-3">
@@ -339,7 +388,7 @@ export default function BookPage() {
                       }`}
                     >
                       <span className="font-medium">
-                        {slot.time}
+                        {slot.date} · {slot.time}
                       </span>
                       <span className="mt-1 text-[10px] text-slate-500">
                         Room {slot.room.room_number}
@@ -365,22 +414,22 @@ export default function BookPage() {
               {selectedClinicId
                 ? clinics.find((c) => c._id === selectedClinicId)?.name ??
                   "Selected clinic"
-                : "Not selected"}
+                : "Any clinic"}
             </p>
             <p>
               <span className="font-medium text-slate-800">
                 Doctor:
               </span>{" "}
               {selectedDoctorId
-                ? doctors.find((d) => d._id === selectedDoctorId)
-                    ?.full_name ?? "Selected doctor"
+                ? doctors.find((d) => d._id === selectedDoctorId)?.full_name ??
+                  "Selected doctor"
                 : "Not selected"}
             </p>
             <p>
               <span className="font-medium text-slate-800">
                 Date:
               </span>{" "}
-              {date || "Not selected"}
+              {date || "Any date"}
             </p>
             <p>
               <span className="font-medium text-slate-800">
@@ -393,8 +442,7 @@ export default function BookPage() {
                 Selected time:
               </span>{" "}
               {selectedSlotId
-                ? slots.find((s) => s._id === selectedSlotId)?.time ??
-                  "Selected"
+                ? slots.find((s) => s._id === selectedSlotId)?.time ?? "Selected"
                 : "Not selected"}
             </p>
           </div>

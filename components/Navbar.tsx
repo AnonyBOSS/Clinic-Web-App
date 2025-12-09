@@ -89,12 +89,9 @@ export default function Navbar() {
           {loading ? null : user ? (
             // ✅ Logged in: show name + Logout
             <div className="flex items-center gap-3">
-              <span className="hidden text-xs text-slate-600 sm:inline">
-                {user.full_name} · {user.role.toLowerCase()}
-              </span>
               {user && (
               <Link href="/profile" className="hidden text-xs text-slate-600 hover:text-slate-900 sm:inline">
-                Profile
+                {user.full_name} · {user.role.toLowerCase()}
               </Link>
               )}
               <Button
