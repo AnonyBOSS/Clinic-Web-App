@@ -1,10 +1,6 @@
 // app/api/slots/available/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/connection";
-
-import "@/models/Room";
-import "@/models/Clinic";
-import "@/models/Doctor";
 import { Slot } from "@/models/Slot";
 
 function todayDateLocal(): string {
@@ -27,19 +23,22 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const doctorId = searchParams.get("doctorId");
-    const clinicId = searchParams.get("clinicId");
-    const date = searchParams.get("date");
-    const fromDate = searchParams.get("fromDate");
-    const toDate = searchParams.get("toDate");
+    const doctorId = searchParams.get("doctorId") || undefined;
+    const clinicId = searchParams.get("clinicId") || undefined;
+    const date = searchParams.get("date") || undefined;
 
-    // allow doctorId OR clinicId (or both)
-    if (!doctorId && !clinicId) {
+    if (!doctorId && !clinicId && !date) {
       return NextResponse.json(
-        { success: false, error: "doctorId or clinicId is required." },
+        {
+          success: false,
+          error: "Provide at least doctorId, clinicId, or date."
+        },
         { status: 400 }
       );
     }
+
+    const today = todayDateLocal();
+    const nowTime = nowTimeLocal();
 
     const filter: any = {
       status: "AVAILABLE"
@@ -48,52 +47,50 @@ export async function GET(req: NextRequest) {
     if (doctorId) filter.doctor = doctorId;
     if (clinicId) filter.clinic = clinicId;
 
-    const today = todayDateLocal();
-    const nowTime = nowTimeLocal();
-
     if (date) {
       filter.date = date;
-    } else if (fromDate && toDate) {
-      filter.date = { $gte: fromDate, $lte: toDate };
     } else {
-      // only future dates by default
       filter.date = { $gte: today };
     }
 
-    // 🧹 Lazy-clean stale AVAILABLE slots for this doctor/clinic
-    const staleFilter: any = {
-      status: "AVAILABLE"
-    };
-    if (doctorId) staleFilter.doctor = doctorId;
-    if (clinicId) staleFilter.clinic = clinicId;
-    staleFilter.$or = [
-      { date: { $lt: today } },
-      { date: today, time: { $lte: nowTime } }
-    ];
-    await Slot.deleteMany(staleFilter);
-
-    // Now fetch remaining available slots
     const rawSlots = await Slot.find(filter)
-      .sort({ date: 1, time: 1 })
-      .populate("clinic", "name address")
-      .populate("room", "room_number status")
-      .populate("doctor", "full_name specializations")
+      .populate("room", "room_number status clinic")
+      .populate("clinic", "name address.city address.governorate")
+      .populate("doctor", "full_name specializations consultation_fee")
       .exec();
 
-    // Extra safety filter on API side
-    const slots = rawSlots.filter((s: any) => {
-      if (!s.date || !s.time) return false;
+    const cleaned: any[] = [];
+    const toDelete: string[] = [];
 
-      if (s.date < today) return false;
-      if (s.date === today && s.time <= nowTime) return false;
+    for (const s of rawSlots as any[]) {
+      const slotDate = s.date as string;
+      const slotTime = s.time as string;
 
-      if (s.room && s.room.status === "MAINTENANCE") return false;
+      // drop maintenance rooms
+      if (s.room && s.room.status === "MAINTENANCE") {
+        toDelete.push(String(s._id));
+        continue;
+      }
 
-      return true;
-    });
+      // drop past slots
+      if (slotDate < today) {
+        toDelete.push(String(s._id));
+        continue;
+      }
+      if (slotDate === today && slotTime <= nowTime) {
+        toDelete.push(String(s._id));
+        continue;
+      }
+
+      cleaned.push(s);
+    }
+
+    if (toDelete.length > 0) {
+      await Slot.deleteMany({ _id: { $in: toDelete } }).exec();
+    }
 
     return NextResponse.json(
-      { success: true, data: slots },
+      { success: true, data: cleaned },
       { status: 200 }
     );
   } catch (error) {

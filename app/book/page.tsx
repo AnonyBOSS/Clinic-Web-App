@@ -2,6 +2,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
 import Select from "@/components/Select";
@@ -29,6 +31,7 @@ type Doctor = {
   qualifications?: string;
   specializations?: string[];
   clinic_affiliations?: Clinic[];
+  consultation_fee?: number;
 };
 
 type SlotItem = {
@@ -44,15 +47,22 @@ type SlotItem = {
   clinic?: {
     _id: string;
     name: string;
+    address?: {
+      city?: string;
+      governorate?: string;
+    };
   };
   doctor?: {
     _id: string;
     full_name: string;
     specializations?: string[];
+    consultation_fee?: number;
   };
 };
 
 export default function BookPage() {
+  const router = useRouter();
+
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [slots, setSlots] = useState<SlotItem[]>([]);
@@ -64,16 +74,11 @@ export default function BookPage() {
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
-  const [amount, setAmount] = useState("300"); // default fee
-  const [method, setMethod] = useState<"CASH" | "CARD">("CASH");
-  const [notes, setNotes] = useState("");
-
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [booking, setBooking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
+  // Load clinics + doctors
   useEffect(() => {
     async function load() {
       try {
@@ -101,45 +106,44 @@ export default function BookPage() {
     load();
   }, []);
 
-  // ✅ generic fetch that works with doctor and/or clinic
-  async function fetchSlots(opts: {
+  async function fetchSlots(args?: {
     doctorId?: string;
     clinicId?: string;
-    dateStr?: string;
+    date?: string;
   }) {
-    const { doctorId, clinicId, dateStr } = opts;
+    const doctorId = args?.doctorId ?? selectedDoctorId;
+    const clinicId = args?.clinicId ?? selectedClinicId;
+    const dateVal = args?.date ?? date;
+
+    if (!doctorId && !clinicId && !dateVal) {
+      setSlots([]);
+      return;
+    }
 
     setError(null);
-    setSuccess(null);
+    setLoadingSlots(true);
     setSlots([]);
     setSelectedSlotId(null);
     setSelectedRoomId(null);
 
-    if (!doctorId && !clinicId) {
-      setError("Please select a doctor or a clinic first.");
-      return;
-    }
-
-    const params = new URLSearchParams();
-    if (doctorId) params.set("doctorId", doctorId);
-    if (clinicId) params.set("clinicId", clinicId);
-    if (dateStr) params.set("date", dateStr);
-
-    setLoadingSlots(true);
-
     try {
+      const params = new URLSearchParams();
+      if (doctorId) params.set("doctorId", doctorId);
+      if (clinicId) params.set("clinicId", clinicId);
+      if (dateVal) params.set("date", dateVal);
+
       const res = await fetch(`/api/slots/available?${params.toString()}`, {
         credentials: "include"
       });
 
-      const data = await res.json().catch(() => null);
-
       if (!res.ok) {
+        const data = await res.json().catch(() => null);
         setError(data?.error ?? "Failed to load slots.");
         return;
       }
 
-      setSlots((data?.data ?? []) as SlotItem[]);
+      const data = await res.json();
+      setSlots(data.data as SlotItem[]);
     } catch {
       setError("Failed to load slots.");
     } finally {
@@ -147,97 +151,73 @@ export default function BookPage() {
     }
   }
 
-  async function loadSlots(e?: FormEvent) {
-    if (e) e.preventDefault();
-    await fetchSlots({
-      doctorId: selectedDoctorId || undefined,
-      clinicId: selectedClinicId || undefined,
-      dateStr: date || undefined
-    });
+  // Auto-load slots when filters change
+  useEffect(() => {
+    fetchSlots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDoctorId, selectedClinicId, date]);
+
+  function handleSearchSubmit(e: FormEvent) {
+    e.preventDefault();
+    fetchSlots();
   }
 
-  async function handleBook() {
-    setError(null);
-    setSuccess(null);
+  function handleSlotSelect(slot: SlotItem) {
+    setSelectedSlotId(slot._id);
+    setSelectedRoomId(slot.room._id);
 
-    if (!selectedSlotId) {
+    // Autofill clinic/doctor/date if not set
+    if (!selectedClinicId && slot.clinic?._id) {
+      setSelectedClinicId(slot.clinic._id);
+    }
+    if (!selectedDoctorId && slot.doctor?._id) {
+      setSelectedDoctorId(slot.doctor._id);
+    }
+    if (!date && slot.date) {
+      setDate(slot.date);
+    }
+  }
+
+  function goToConfirm() {
+    if (!selectedSlotId || !selectedRoomId) {
       setError("Please select a time slot first.");
       return;
     }
 
+    const params = new URLSearchParams({
+      doctorId: selectedDoctorId,
+      clinicId: selectedClinicId,
+      roomId: selectedRoomId,
+      slotId: selectedSlotId
+    });
+
     const slot = slots.find((s) => s._id === selectedSlotId);
-    if (!slot) {
-      setError("Selected slot is no longer available.");
-      return;
+    if (slot) {
+      params.set("date", slot.date);
+      params.set("time", slot.time);
     }
 
-    // doctor can come from selected state OR from the slot
-    const doctorIdToUse =
-      selectedDoctorId || slot.doctor?._id || "";
-
-    if (!doctorIdToUse) {
-      setError("Unable to detect doctor for this slot.");
-      return;
-    }
-
-    const clinicIdToUse =
-      selectedClinicId || slot.clinic?._id || "";
-    const roomIdToUse =
-      selectedRoomId || slot.room?._id || "";
-
-    if (!clinicIdToUse || !roomIdToUse) {
-      setError("Please select a valid time slot.");
-      return;
-    }
-
-    const amountNumber = Number(amount);
-    if (!amountNumber || amountNumber <= 0) {
-      setError("Please enter a valid consultation fee.");
-      return;
-    }
-
-    setBooking(true);
-    try {
-      const res = await fetch("/api/appointments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          doctorId: doctorIdToUse,
-          clinicId: clinicIdToUse,
-          roomId: roomIdToUse,
-          slotId: selectedSlotId,
-          notes: notes || undefined,
-          amount: amountNumber,
-          method
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to book appointment.");
-      } else {
-        setSuccess("Appointment booked successfully!");
-      }
-    } catch {
-      setError("Network error while booking.");
-    } finally {
-      setBooking(false);
-    }
+    router.push(`/book/confirm?${params.toString()}`);
   }
+
+  const selectedDoctor =
+    doctors.find((d) => d._id === selectedDoctorId) ??
+    slots.find((s) => s._id === selectedSlotId)?.doctor;
+
+  const selectedClinic =
+    clinics.find((c) => c._id === selectedClinicId) ??
+    slots.find((s) => s._id === selectedSlotId)?.clinic;
 
   if (loadingInitial) {
     return (
       <PageShell
         title="Book an appointment"
-        description="Choose clinic, doctor, and time to schedule your visit."
+        description="Choose clinic, doctor, and date to find available slots."
       >
         <LoadingSpinner />
       </PageShell>
     );
   }
-
-  const selectedSlot = slots.find((s) => s._id === selectedSlotId);
 
   return (
     <PageShell
@@ -245,143 +225,67 @@ export default function BookPage() {
       description="Choose a clinic, doctor, and time slot to schedule your visit."
     >
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left: selection form */}
+        {/* Left: selection form & slots */}
         <Card className="lg:col-span-2 space-y-4">
-          <form className="space-y-4" onSubmit={loadSlots}>
-            {/* Clinic */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">
-                Clinic
-              </label>
-              <Select
-                value={selectedClinicId}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedClinicId(value);
-                  fetchSlots({
-                    doctorId: selectedDoctorId || undefined,
-                    clinicId: value || undefined,
-                    dateStr: date || undefined
-                  });
-                }}
-              >
-                <option value="">Any clinic</option>
-                {clinics.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name} – {c.address.city}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {/* Doctor */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">
-                Doctor
-              </label>
-              <Select
-                value={selectedDoctorId}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedDoctorId(value);
-                  setSelectedSlotId(null);
-                  setSelectedRoomId(null);
-
-                  if (value || selectedClinicId || date) {
-                    fetchSlots({
-                      doctorId: value || undefined,
-                      clinicId: selectedClinicId || undefined,
-                      dateStr: date || undefined
-                    });
-                  }
-                }}
-              >
-                <option value="">Any doctor</option>
-                {doctors.map((d) => (
-                  <option key={d._id} value={d._id}>
-                    {d.full_name}
-                    {d.specializations && d.specializations.length > 0
-                      ? ` – ${d.specializations.join(", ")}`
-                      : ""}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {/* Date */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">
-                Date
-              </label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setDate(value);
-
-                  if (selectedDoctorId || selectedClinicId) {
-                    fetchSlots({
-                      doctorId: selectedDoctorId || undefined,
-                      clinicId: selectedClinicId || undefined,
-                      dateStr: value || undefined
-                    });
-                  }
-                }}
-              />
-            </div>
-
-            {/* Fee & payment method */}
-            <div className="grid gap-4 sm:grid-cols-2">
+          <form className="space-y-4" onSubmit={handleSearchSubmit}>
+            <div className="grid gap-4 md:grid-cols-3">
+              {/* Clinic */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
-                  Consultation fee (EGP)
-                </label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Payment method
+                  Clinic
                 </label>
                 <Select
-                  value={method}
-                  onChange={(e) =>
-                    setMethod(e.target.value as "CASH" | "CARD")
-                  }
+                  value={selectedClinicId}
+                  onChange={(e) => setSelectedClinicId(e.target.value)}
                 >
-                  <option value="CASH">Cash</option>
-                  <option value="CARD">Card</option>
+                  <option value="">Any clinic</option>
+                  {clinics.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name} – {c.address.city}
+                    </option>
+                  ))}
                 </Select>
               </div>
-            </div>
 
-            {/* Notes */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">
-                Notes for the doctor (optional)
-              </label>
-              <Input
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Short description of your visit reason"
-              />
+              {/* Doctor */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-700">
+                  Doctor
+                </label>
+                <Select
+                  value={selectedDoctorId}
+                  onChange={(e) => setSelectedDoctorId(e.target.value)}
+                >
+                  <option value="">Any doctor</option>
+                  {doctors.map((d) => (
+                    <option key={d._id} value={d._id}>
+                      {d.full_name}
+                      {d.specializations && d.specializations.length > 0
+                        ? ` – ${d.specializations.join(", ")}`
+                        : ""}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Date */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-700">
+                  Date (optional)
+                </label>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
               <Button type="submit" isLoading={loadingSlots}>
-                Search available slots
+                Refresh slots
               </Button>
-              {error && (
-                <p className="text-xs text-red-600">{error}</p>
-              )}
-              {success && (
-                <p className="text-xs text-emerald-600">{success}</p>
-              )}
+              {error && <p className="text-xs text-red-600">{error}</p>}
             </div>
           </form>
 
@@ -395,27 +299,28 @@ export default function BookPage() {
             ) : slots.length === 0 ? (
               <EmptyState
                 title="No available slots"
-                description="Try another doctor, clinic, or date."
+                description="Try another date, doctor, or clinic."
               />
             ) : (
               <div className="grid gap-2 sm:grid-cols-3">
                 {slots.map((slot) => {
                   const selected = selectedSlotId === slot._id;
+                  const clinicLabel = slot.clinic
+                    ? `${slot.clinic.name}${
+                        slot.clinic.address?.city
+                          ? " – " + slot.clinic.address.city
+                          : ""
+                      }`
+                    : "Clinic";
+                  const doctorLabel = slot.doctor
+                    ? slot.doctor.full_name
+                    : undefined;
+
                   return (
                     <button
                       key={slot._id}
                       type="button"
-                      onClick={() => {
-                        setSelectedSlotId(slot._id);
-                        setSelectedRoomId(slot.room._id);
-                        setDate(slot.date);
-                        if (slot.clinic?._id) {
-                          setSelectedClinicId(slot.clinic._id);
-                        }
-                        if (slot.doctor?._id) {
-                          setSelectedDoctorId(slot.doctor._id);
-                        }
-                      }}
+                      onClick={() => handleSlotSelect(slot)}
                       className={`flex flex-col rounded-xl border px-3 py-2 text-left text-xs transition ${
                         selected
                           ? "border-indigo-600 bg-indigo-50 text-indigo-900"
@@ -425,18 +330,12 @@ export default function BookPage() {
                       <span className="font-medium">
                         {slot.date} · {slot.time}
                       </span>
-                      {slot.clinic?.name && (
-                        <span className="mt-1 text-[10px] text-slate-500">
-                          {slot.clinic.name}
-                        </span>
-                      )}
-                      {slot.doctor?.full_name && (
-                        <span className="mt-1 text-[10px] text-slate-500">
-                          Dr. {slot.doctor.full_name}
-                        </span>
-                      )}
                       <span className="mt-1 text-[10px] text-slate-500">
+                        {clinicLabel}
+                      </span>
+                      <span className="mt-0.5 text-[10px] text-slate-500">
                         Room {slot.room.room_number}
+                        {doctorLabel ? ` · ${doctorLabel}` : ""}
                       </span>
                     </button>
                   );
@@ -446,60 +345,48 @@ export default function BookPage() {
           </div>
         </Card>
 
-        {/* Right: summary */}
+        {/* Right: summary & continue */}
         <Card className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-900">
             Appointment summary
           </h2>
           <div className="space-y-2 text-xs text-slate-600">
             <p>
-              <span className="font-medium text-slate-800">
-                Clinic:
-              </span>{" "}
-              {selectedClinicId
-                ? clinics.find((c) => c._id === selectedClinicId)?.name ??
-                  "Selected clinic"
-                : selectedSlot?.clinic?.name ?? "Any clinic"}
+              <span className="font-medium text-slate-800">Clinic:</span>{" "}
+              {selectedClinic ? selectedClinic.name : "Any clinic"}
             </p>
             <p>
-              <span className="font-medium text-slate-800">
-                Doctor:
-              </span>{" "}
-              {selectedDoctorId
-                ? doctors.find((d) => d._id === selectedDoctorId)?.full_name ??
-                  "Selected doctor"
-                : selectedSlot?.doctor?.full_name ?? "Any doctor"}
+              <span className="font-medium text-slate-800">Doctor:</span>{" "}
+              {selectedDoctor ? selectedDoctor.full_name : "Any doctor"}
             </p>
             <p>
-              <span className="font-medium text-slate-800">
-                Date:
-              </span>{" "}
-              {date || selectedSlot?.date || "Any date"}
+              <span className="font-medium text-slate-800">Date filter:</span>{" "}
+              {date || "Any upcoming date"}
             </p>
             <p>
-              <span className="font-medium text-slate-800">
-                Fee:
-              </span>{" "}
-              {amount || "0"} EGP ({method.toLowerCase()})
-            </p>
-            <p>
-              <span className="font-medium text-slate-800">
-                Selected time:
-              </span>{" "}
-              {selectedSlot
-                ? `${selectedSlot.date} · ${selectedSlot.time}`
+              <span className="font-medium text-slate-800">Selected time:</span>{" "}
+              {selectedSlotId
+                ? slots.find((s) => s._id === selectedSlotId)?.time ??
+                  "Selected"
                 : "Not selected"}
+            </p>
+            <p>
+              <span className="font-medium text-slate-800">
+                Consultation fee:
+              </span>{" "}
+              {selectedDoctor?.consultation_fee
+                ? `${selectedDoctor.consultation_fee} EGP`
+                : "Set by doctor"}
             </p>
           </div>
 
           <Button
             className="w-full"
             variant="primary"
-            disabled={!selectedSlotId || booking}
-            isLoading={booking}
-            onClick={handleBook}
+            disabled={!selectedSlotId}
+            onClick={goToConfirm}
           >
-            Confirm booking
+            Continue to payment
           </Button>
         </Card>
       </div>

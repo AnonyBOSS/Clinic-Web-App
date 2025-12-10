@@ -1,32 +1,18 @@
 // app/doctor/schedule/page.tsx
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState } from "react";
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Select from "@/components/Select";
 import Input from "@/components/Input";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import EmptyState from "@/components/EmptyState";
-
-type Role = "PATIENT" | "DOCTOR";
-
-type CurrentUser = {
-  id: string;
-  full_name: string;
-  email: string;
-  role: Role;
-};
 
 type Clinic = {
   _id: string;
   name: string;
-  address?: {
-    street?: string;
-    city?: string;
-    governorate?: string;
-  };
+  address?: { city?: string; governorate?: string };
 };
 
 type Room = {
@@ -46,174 +32,113 @@ type ScheduleRow = {
   isActive: boolean;
 };
 
-const DAY_LABELS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday"
-];
+const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function DoctorSchedulePage() {
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
-
+  const [consultationFee, setConsultationFee] = useState("300");
+  const [rows, setRows] = useState<ScheduleRow[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [scheduleRows, setScheduleRows] = useState<ScheduleRow[]>([]);
-  const [loadingSchedule, setLoadingSchedule] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-
-  // 1) Confirm user is doctor
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include"
-        });
-        if (!res.ok) {
-          setUser(null);
-        } else {
-          const data = await res.json();
-          const me = data.data as CurrentUser;
-          if (me.role !== "DOCTOR") {
-            setUser(null);
-          } else {
-            setUser(me);
-          }
-        }
-      } catch {
-        setUser(null);
-      } finally {
-        setLoadingUser(false);
-      }
-    }
-
-    loadUser();
-  }, []);
-
-  // 2) Load schedule + clinics + rooms
-  useEffect(() => {
-    if (!user) {
-      setLoadingSchedule(false);
-      return;
-    }
-
-    async function loadSchedule() {
-      setLoadingSchedule(true);
-      setError(null);
-      setSuccess(null);
-
+    async function load() {
       try {
         const res = await fetch("/api/doctors/schedule", {
           credentials: "include"
         });
-        const data = await res.json();
-
         if (!res.ok) {
-          setError(data.error ?? "Failed to load schedule.");
-          setScheduleRows([]);
-          setClinics([]);
-          setRooms([]);
+          const data = await res.json().catch(() => null);
+          setError(data?.error ?? "Failed to load schedule.");
+          setLoading(false);
           return;
         }
-
-        const { schedule_days, clinics, rooms } = data.data as {
-          schedule_days: any[];
-          clinics: Clinic[];
-          rooms: Room[];
-        };
-
-        setClinics(clinics);
-        setRooms(rooms);
-
-        const rows: ScheduleRow[] = [];
-        for (let d = 0; d < 7; d++) {
-          const existing = schedule_days.find((s) => s.dayOfWeek === d);
-          if (existing) {
-            rows.push({
-              dayOfWeek: d,
-              clinicId: existing.clinic?._id ?? existing.clinic ?? "",
-              roomId: existing.room?._id ?? existing.room ?? "",
-              startTime: existing.startTime,
-              endTime: existing.endTime,
-              slotDurationMinutes: existing.slotDurationMinutes,
-              isActive: existing.isActive
-            });
-          } else {
-            rows.push({
-              dayOfWeek: d,
-              clinicId: "",
-              roomId: "",
-              startTime: "09:00",
-              endTime: "17:00",
-              slotDurationMinutes: 30,
-              isActive: false
-            });
-          }
-        }
-
-        setScheduleRows(rows);
+        const data = await res.json();
+        setClinics(data.data.clinics as Clinic[]);
+        setRooms(data.data.rooms as Room[]);
+        setRows(
+          (data.data.schedule_days as any[]).map((s) => ({
+            dayOfWeek: s.dayOfWeek,
+            clinicId: s.clinic?._id ?? s.clinic,
+            roomId: s.room?._id ?? s.room,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            slotDurationMinutes: s.slotDurationMinutes,
+            isActive: s.isActive
+          }))
+        );
+        setConsultationFee(String(data.data.consultationFee ?? 300));
       } catch {
         setError("Failed to load schedule.");
       } finally {
-        setLoadingSchedule(false);
+        setLoading(false);
       }
     }
 
-    loadSchedule();
-  }, [user]);
+    load();
+  }, []);
 
-  function updateRow(index: number, partial: Partial<ScheduleRow>) {
-    setScheduleRows((prev) =>
-      prev.map((row, i) => (i === index ? { ...row, ...partial } : row))
-    );
+  function updateRow(index: number, patch: Partial<ScheduleRow>) {
+    setRows((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], ...patch };
+      return copy;
+    });
   }
 
-  async function handleSave(e: FormEvent) {
-    e.preventDefault();
-    if (!user) return;
+  function addRow() {
+    setRows((prev) => [
+      ...prev,
+      {
+        dayOfWeek: 0,
+        clinicId: clinics[0]?._id ?? "",
+        roomId: undefined,
+        startTime: "09:00",
+        endTime: "17:00",
+        slotDurationMinutes: 30,
+        isActive: true
+      }
+    ]);
+  }
 
+  function removeRow(index: number) {
+    setRows((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSave() {
     setError(null);
     setSuccess(null);
     setSaving(true);
 
-    try {
-      const payload = {
-        scheduleDays: scheduleRows
-          .filter((r) => r.isActive && r.clinicId)
-          .map((r) => ({
-            dayOfWeek: r.dayOfWeek,
-            clinicId: r.clinicId,
-            roomId: r.roomId || undefined,
-            startTime: r.startTime,
-            endTime: r.endTime,
-            slotDurationMinutes: r.slotDurationMinutes,
-            isActive: r.isActive
-          }))
-      };
+    const feeNumber = Number(consultationFee);
+    if (Number.isNaN(feeNumber) || feeNumber < 0) {
+      setError("Consultation fee must be a non-negative number.");
+      setSaving(false);
+      return;
+    }
 
+    try {
       const res = await fetch("/api/doctors/schedule", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          scheduleDays: rows,
+          consultationFee: feeNumber
+        })
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data.error ?? "Failed to save schedule.");
-      } else {
-        setSuccess("Schedule saved successfully.");
+        setError(data?.error ?? "Failed to save schedule.");
+        return;
       }
+
+      setSuccess("Schedule and consultation fee saved. Click 'Generate Slots' to create bookable time slots.");
     } catch {
       setError("Network error while saving schedule.");
     } finally {
@@ -222,11 +147,6 @@ export default function DoctorSchedulePage() {
   }
 
   async function handleGenerateSlots() {
-    if (!fromDate || !toDate) {
-      setError("Please choose from and to dates.");
-      return;
-    }
-
     setError(null);
     setSuccess(null);
     setGenerating(true);
@@ -236,17 +156,17 @@ export default function DoctorSchedulePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ fromDate, toDate })
+        body: JSON.stringify({})
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data.error ?? "Failed to generate slots.");
-      } else {
-        setSuccess(
-          `Slots generated: ${data.data?.createdCount ?? 0} new slots created.`
-        );
+        setError(data?.error ?? "Failed to generate slots.");
+        return;
       }
+
+      const count = data?.data?.createdCount ?? 0;
+      setSuccess(`Successfully generated ${count} time slots for the next 2 weeks.`);
     } catch {
       setError("Network error while generating slots.");
     } finally {
@@ -254,248 +174,233 @@ export default function DoctorSchedulePage() {
     }
   }
 
-  if (loadingUser) {
-    return (
-      <PageShell title="Doctor schedule">
-        <LoadingSpinner />
-      </PageShell>
-    );
-  }
-
-  if (!user) {
+  if (loading) {
     return (
       <PageShell
         title="Doctor schedule"
-        description="Only doctors can configure a weekly schedule."
+        description="Define your working days, rooms, and consultation fee."
       >
-        <EmptyState
-          title="Not authorized"
-          description="Sign in as a doctor to access this page."
-        />
+        <LoadingSpinner />
       </PageShell>
     );
   }
 
   return (
     <PageShell
-      title="Weekly schedule"
-      description="Define your weekly availability, clinics, rooms, and slot durations."
+      title="Doctor schedule"
+      description="Define your working days, rooms, and consultation fee."
     >
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Schedule table */}
-        <Card className="lg:col-span-2 space-y-4">
-          <form className="space-y-4" onSubmit={handleSave}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Weekly recurring schedule
-              </h2>
-              <Button type="submit" size="sm" isLoading={saving}>
-                Save schedule
-              </Button>
-            </div>
+      <div className="space-y-4">
+        {error && (
+          <Card className="border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-700">
+            {error}
+          </Card>
+        )}
+        {success && (
+          <Card className="border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-700">
+            {success}
+          </Card>
+        )}
 
-            {loadingSchedule ? (
-              <LoadingSpinner />
-            ) : clinics.length === 0 ? (
-              <EmptyState
-                title="No clinics configured"
-                description="Ask an admin to create clinics first."
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-xs">
-                  <thead className="border-b bg-slate-50">
-                    <tr>
-                      <th className="px-2 py-2 text-left font-semibold text-slate-700">
-                        Day
-                      </th>
-                      <th className="px-2 py-2 text-left font-semibold text-slate-700">
-                        Active
-                      </th>
-                      <th className="px-2 py-2 text-left font-semibold text-slate-700">
-                        Clinic
-                      </th>
-                      <th className="px-2 py-2 text-left font-semibold text-slate-700">
-                        Room
-                      </th>
-                      <th className="px-2 py-2 text-left font-semibold text-slate-700">
-                        From
-                      </th>
-                      <th className="px-2 py-2 text-left font-semibold text-slate-700">
-                        To
-                      </th>
-                      <th className="px-2 py-2 text-left font-semibold text-slate-700">
-                        Slot (min)
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scheduleRows.map((row, index) => {
-                      const clinicRooms = rooms.filter(
-                        (r) => r.clinic === row.clinicId
-                      );
-                      return (
-                        <tr
-                          key={row.dayOfWeek}
-                          className="border-b last:border-0"
-                        >
-                          <td className="px-2 py-2">
-                            {DAY_LABELS[row.dayOfWeek]}
-                          </td>
-                          <td className="px-2 py-2">
-                            <input
-                              type="checkbox"
-                              checked={row.isActive}
-                              onChange={(e) =>
-                                updateRow(index, {
-                                  isActive: e.target.checked
-                                })
-                              }
-                            />
-                          </td>
-                          <td className="px-2 py-2">
-                            <Select
-                              value={row.clinicId}
-                              onChange={(e) =>
-                                updateRow(index, {
-                                  clinicId: e.target.value,
-                                  roomId: ""
-                                })
-                              }
-                              disabled={!row.isActive}
-                            >
-                              <option value="">Select</option>
-                              {clinics.map((c) => (
-                                <option key={c._id} value={c._id}>
-                                  {c.name}
-                                  {c.address?.city
-                                    ? ` – ${c.address.city}`
-                                    : ""}
-                                </option>
-                              ))}
-                            </Select>
-                          </td>
-                          <td className="px-2 py-2">
-                            <Select
-                              value={row.roomId ?? ""}
-                              onChange={(e) =>
-                                updateRow(index, {
-                                  roomId: e.target.value
-                                })
-                              }
-                              disabled={!row.isActive || !row.clinicId}
-                            >
-                              <option value="">Any room</option>
-                              {clinicRooms.map((r) => (
-                                <option key={r._id} value={r._id}>
-                                  {r.room_number} ({r.status.toLowerCase()})
-                                </option>
-                              ))}
-                            </Select>
-                          </td>
-                          <td className="px-2 py-2">
-                            <Input
-                              type="time"
-                              value={row.startTime}
-                              onChange={(e) =>
-                                updateRow(index, {
-                                  startTime: e.target.value
-                                })
-                              }
-                              disabled={!row.isActive}
-                            />
-                          </td>
-                          <td className="px-2 py-2">
-                            <Input
-                              type="time"
-                              value={row.endTime}
-                              onChange={(e) =>
-                                updateRow(index, {
-                                  endTime: e.target.value
-                                })
-                              }
-                              disabled={!row.isActive}
-                            />
-                          </td>
-                          <td className="px-2 py-2">
-                            <Input
-                              type="number"
-                              min={5}
-                              value={String(row.slotDurationMinutes)}
-                              onChange={(e) =>
-                                updateRow(index, {
-                                  slotDurationMinutes: Number(
-                                    e.target.value
-                                  )
-                                })
-                              }
-                              disabled={!row.isActive}
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {error && (
-              <p className="text-xs text-red-600">{error}</p>
-            )}
-            {success && (
-              <p className="text-xs text-emerald-600">{success}</p>
-            )}
-          </form>
-        </Card>
-
-        {/* Generate slots card */}
-        <Card className="space-y-4">
+        {/* Consultation fee */}
+        <Card className="p-4 space-y-3">
           <h2 className="text-sm font-semibold text-slate-900">
-            Generate time slots
+            Consultation fee
           </h2>
           <p className="text-xs text-slate-600">
-            Use your weekly schedule to create actual bookable slots
-            between the selected dates.
+            This fee will be used for all appointments booked with you. Patients
+            will see it on the booking and confirmation pages.
           </p>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={0}
+              className="max-w-[160px]"
+              value={consultationFee}
+              onChange={(e) => setConsultationFee(e.target.value)}
+            />
+            <span className="text-xs text-slate-600">EGP</span>
+          </div>
+        </Card>
 
-          <div className="space-y-2 text-xs text-slate-700">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">
-                From date
-              </label>
-              <Input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">
-                To date
-              </label>
-              <Input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-              />
-            </div>
+        {/* Schedule rows */}
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-900">
+              Weekly schedule
+            </h2>
+            <Button size="sm" variant="outline" onClick={addRow}>
+              Add row
+            </Button>
           </div>
 
-          <Button
-            className="w-full"
-            isLoading={generating}
-            onClick={handleGenerateSlots}
-          >
-            Generate slots
-          </Button>
+          {rows.length === 0 ? (
+            <p className="text-xs text-slate-500">
+              No schedule rows yet. Add one to start defining your working
+              hours.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {rows.map((row, i) => {
+                const clinicRooms = rooms.filter(
+                  (r) => r.clinic === row.clinicId
+                );
+                return (
+                  <div
+                    key={i}
+                    className="grid gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 md:grid-cols-6 md:items-end"
+                  >
+                    {/* Day */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-medium text-slate-700">
+                        Day
+                      </label>
+                      <Select
+                        value={row.dayOfWeek}
+                        onChange={(e) =>
+                          updateRow(i, { dayOfWeek: Number(e.target.value) })
+                        }
+                      >
+                        {days.map((d, idx) => (
+                          <option key={idx} value={idx}>
+                            {d}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
 
-          {error && (
-            <p className="text-xs text-red-600">{error}</p>
+                    {/* Clinic */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-medium text-slate-700">
+                        Clinic
+                      </label>
+                      <Select
+                        value={row.clinicId}
+                        onChange={(e) =>
+                          updateRow(i, {
+                            clinicId: e.target.value,
+                            roomId: undefined
+                          })
+                        }
+                      >
+                        <option value="">Select clinic</option>
+                        {clinics.map((c) => (
+                          <option key={c._id} value={c._id}>
+                            {c.name}
+                            {c.address?.city ? ` – ${c.address.city}` : ""}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    {/* Room */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-medium text-slate-700">
+                        Room
+                      </label>
+                      <Select
+                        value={row.roomId ?? ""}
+                        onChange={(e) =>
+                          updateRow(i, {
+                            roomId: e.target.value || undefined
+                          })
+                        }
+                      >
+                        <option value="">Any room</option>
+                        {clinicRooms.map((r) => (
+                          <option key={r._id} value={r._id}>
+                            Room {r.room_number}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    {/* Time range */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-medium text-slate-700">
+                        From
+                      </label>
+                      <Input
+                        type="time"
+                        value={row.startTime}
+                        onChange={(e) =>
+                          updateRow(i, { startTime: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-medium text-slate-700">
+                        To
+                      </label>
+                      <Input
+                        type="time"
+                        value={row.endTime}
+                        onChange={(e) =>
+                          updateRow(i, { endTime: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    {/* Duration & controls */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-medium text-slate-700">
+                        Slot (min)
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={5}
+                          value={row.slotDurationMinutes}
+                          onChange={(e) =>
+                            updateRow(i, {
+                              slotDurationMinutes: Number(e.target.value)
+                            })
+                          }
+                        />
+                        <label className="flex items-center gap-1 text-[11px] text-slate-600">
+                          <input
+                            type="checkbox"
+                            checked={row.isActive}
+                            onChange={(e) =>
+                              updateRow(i, { isActive: e.target.checked })
+                            }
+                          />
+                          Active
+                        </label>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => removeRow(i)}
+                        >
+                          X
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
-          {success && (
-            <p className="text-xs text-emerald-600">{success}</p>
-          )}
+
+          <div className="pt-2 border-t border-slate-100 flex justify-end gap-3">
+            <Button size="sm" isLoading={saving} onClick={handleSave}>
+              Save schedule
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              isLoading={generating}
+              onClick={handleGenerateSlots}
+              disabled={rows.length === 0}
+            >
+              Generate Slots (2 weeks)
+            </Button>
+          </div>
+
+          <p className="text-xs text-slate-500 mt-2">
+            <strong>Note:</strong> After saving your schedule, click &quot;Generate Slots&quot; to create bookable time slots for patients.
+            Slots are generated for the next 2 weeks based on your active schedule days.
+          </p>
         </Card>
       </div>
     </PageShell>

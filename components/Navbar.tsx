@@ -27,7 +27,7 @@ export default function Navbar() {
     try {
       const res = await fetch("/api/auth/me", {
         credentials: "include",
-        cache: "no-store" // avoid stale cached responses
+        cache: "no-store"
       });
 
       if (!res.ok) {
@@ -43,7 +43,6 @@ export default function Navbar() {
     }
   }
 
-  // Run on first load AND whenever the URL path changes
   useEffect(() => {
     setLoading(true);
     fetchMe();
@@ -54,17 +53,15 @@ export default function Navbar() {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
-        credentials: "include",
-        cache: "no-store"
+        credentials: "include"
       });
     } catch {
-      // ignore network error
+      // ignore
     } finally {
       setUser(null);
-
-      // If we're already on "/", force a reload so everything updates
-      if (typeof window !== "undefined" && pathname === "/") {
-        window.location.reload();
+      // hard reload so all pages (including home) re-fetch "me"
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
       } else {
         router.push("/");
         router.refresh();
@@ -77,11 +74,9 @@ export default function Navbar() {
       <div className="site-container flex h-14 items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
-            CB
+            CF
           </span>
-          <span className="text-sm font-semibold text-slate-900">
-            Clinics Booking
-          </span>
+          <span className="text-sm font-semibold text-slate-900">Clinify</span>
         </Link>
 
         <nav className="flex items-center gap-3">
@@ -93,7 +88,6 @@ export default function Navbar() {
           </Link>
 
           {loading ? null : user ? (
-            // Logged in
             <div className="flex items-center gap-3">
               {user && (
                 <Link
@@ -108,7 +102,6 @@ export default function Navbar() {
               </Button>
             </div>
           ) : (
-            // Logged out
             <>
               <Link href="/login">
                 <Button variant="outline" size="sm">

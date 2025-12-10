@@ -13,8 +13,8 @@ type ScheduleDayDTO = {
   dayOfWeek: number;
   clinicId: string;
   roomId?: string;
-  startTime: string; // "HH:MM"
-  endTime: string;   // "HH:MM"
+  startTime: string;
+  endTime: string;
   slotDurationMinutes: number;
   isActive: boolean;
 };
@@ -64,7 +64,6 @@ export async function GET(req: NextRequest) {
       .sort({ name: 1 })
       .exec();
 
-    // ✅ Only return non-maintenance rooms
     const rooms = await Room.find({ status: { $ne: "MAINTENANCE" } })
       .select("room_number status clinic")
       .sort({ room_number: 1 })
@@ -76,7 +75,8 @@ export async function GET(req: NextRequest) {
         data: {
           schedule_days: doctor.schedule_days,
           clinics,
-          rooms
+          rooms,
+          consultationFee: doctor.consultation_fee ?? 300
         }
       },
       { status: 200 }
@@ -102,13 +102,17 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const body = (await req.json().catch(() => null)) as {
-      scheduleDays?: ScheduleDayDTO[];
-    } | null;
+    const body = (await req.json().catch(() => null)) as
+      | {
+          scheduleDays?: ScheduleDayDTO[];
+          consultationFee?: number;
+        }
+      | null;
 
     const scheduleDays = body?.scheduleDays ?? [];
+    const consultationFee = body?.consultationFee;
 
-    // Basic validation
+    // Validate schedule rows
     for (const day of scheduleDays) {
       if (
         day.dayOfWeek < 0 ||
@@ -148,7 +152,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    // Overlap validation per (dayOfWeek, clinicId, roomId)
+    // Overlap validation
     const groups = new Map<string, ScheduleDayDTO[]>();
     for (const d of scheduleDays) {
       const key = `${d.dayOfWeek}_${d.clinicId}_${d.roomId || "none"}`;
@@ -179,7 +183,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    // ✅ Prevent using maintenance rooms
+    // Prevent scheduling in maintenance rooms
     const roomIds = Array.from(
       new Set(
         scheduleDays
@@ -226,11 +230,19 @@ export async function PUT(req: NextRequest) {
       isActive: d.isActive
     }));
 
+    if (
+      typeof consultationFee === "number" &&
+      !Number.isNaN(consultationFee) &&
+      consultationFee >= 0
+    ) {
+      doctor.consultation_fee = consultationFee;
+    }
+
     await doctor.save();
 
-    // Auto-cancel and clean up slots as before
+    // Auto-cancel & cleanup logic (unchanged)
     try {
-      const activeSchedule = doctor.schedule_days.filter((s) => s.isActive);
+      const activeSchedule = doctor.schedule_days.filter((s: any) => s.isActive);
       if (activeSchedule.length > 0) {
         const now = new Date();
         const todayStr = formatDateUTC(now);
@@ -250,7 +262,7 @@ export async function PUT(req: NextRequest) {
 
           const slotDateTime = new Date(`${slot.date}T${slot.time}:00Z`);
           if (isNaN(slotDateTime.getTime()) || slotDateTime <= now) {
-            continue; // don't touch past appointments
+            continue;
           }
 
           const slotDayOfWeek = slotDateTime.getUTCDay();
@@ -276,7 +288,6 @@ export async function PUT(req: NextRequest) {
           }
         }
 
-        // Remove future AVAILABLE slots that no longer match schedule
         const futureSlots = await Slot.find({
           doctor: doctor._id,
           date: { $gte: todayStr },

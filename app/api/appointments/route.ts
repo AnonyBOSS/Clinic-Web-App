@@ -5,10 +5,23 @@ import { getAuthUserFromRequest } from "@/lib/auth-request";
 import { Slot } from "@/models/Slot";
 import { Appointment } from "@/models/Appointment";
 import { Payment } from "@/models/Payment";
+import { Doctor } from "@/models/Doctor";
 import { Room } from "@/models/Room";
-import "@/models/Clinic";
-import "@/models/Doctor";
-import "@/models/Patient";
+
+function todayDateLocal(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate() + 0).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function nowTimeLocal(): string {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
 
 type BookBody = {
   doctorId?: string;
@@ -16,7 +29,6 @@ type BookBody = {
   roomId?: string;
   slotId?: string;
   notes?: string;
-  amount?: number;
   method?: "CASH" | "CARD";
 };
 
@@ -38,9 +50,9 @@ export async function GET(req: NextRequest) {
 
     const appointments = await Appointment.find(filter)
       .sort({ "slot.date": 1, "slot.time": 1 })
-      .populate("doctor", "full_name specializations")
+      .populate("doctor", "full_name specializations consultation_fee")
       .populate("patient", "full_name email")
-      .populate("clinic", "name address.city")
+      .populate("clinic", "name address.city address.governorate")
       .populate("room", "room_number")
       .populate("slot", "date time")
       .exec();
@@ -73,46 +85,53 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json().catch(() => null)) as BookBody | null;
-    const { doctorId, clinicId, roomId, slotId, notes, amount, method } =
-      body ?? {};
+    const { doctorId, clinicId, roomId, slotId, notes, method } = body ?? {};
 
-    if (!doctorId || !clinicId || !roomId || !slotId || !amount || !method) {
+    if (!doctorId || !clinicId || !roomId || !slotId || !method) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "doctorId, clinicId, roomId, slotId, amount and method are required."
+          error: "doctorId, clinicId, roomId, slotId and method are required."
         },
         { status: 400 }
       );
     }
 
-    const room = await Room.findById(roomId).exec();
+    if (method !== "CASH" && method !== "CARD") {
+      return NextResponse.json(
+        { success: false, error: "Invalid payment method." },
+        { status: 400 }
+      );
+    }
+
+    const today = todayDateLocal();
+    const nowTime = nowTimeLocal();
+
+    const room = await Room.findById(roomId).select("status").exec();
     if (!room) {
       return NextResponse.json(
-        { success: false, error: "Selected room does not exist." },
-        { status: 400 }
+        { success: false, error: "Room not found." },
+        { status: 404 }
       );
     }
     if (room.status === "MAINTENANCE") {
       return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Selected room is currently under maintenance. Please choose another slot."
-        },
+        { success: false, error: "Selected room is under maintenance." },
         { status: 400 }
       );
     }
 
-    // 1) Atomically lock slot (AVAILABLE → BOOKED)
     const slot = await Slot.findOneAndUpdate(
       {
         _id: slotId,
         doctor: doctorId,
         clinic: clinicId,
         room: roomId,
-        status: "AVAILABLE"
+        status: "AVAILABLE",
+        $or: [
+          { date: { $gt: today } },
+          { date: today, time: { $gt: nowTime } }
+        ]
       },
       { status: "BOOKED" },
       { new: true }
@@ -120,20 +139,32 @@ export async function POST(req: NextRequest) {
 
     if (!slot) {
       return NextResponse.json(
-        { success: false, error: "Slot is no longer available." },
+        { success: false, error: "Slot is no longer available or in the past." },
         { status: 409 }
       );
     }
 
-    // 🚫 Extra safety: prevent booking past slots
-    const slotDateTime = new Date(`${slot.date}T${slot.time}:00Z`);
-    if (isNaN(slotDateTime.getTime()) || slotDateTime <= new Date()) {
-      // revert the slot back to AVAILABLE just in case
-      await Slot.findByIdAndUpdate(slot._id, { status: "AVAILABLE" }).exec();
+    const doctor = await Doctor.findById(doctorId)
+      .select("consultation_fee full_name")
+      .exec();
+
+    if (!doctor) {
+      return NextResponse.json(
+        { success: false, error: "Doctor not found." },
+        { status: 404 }
+      );
+    }
+
+    const amount =
+      typeof doctor.consultation_fee === "number"
+        ? doctor.consultation_fee
+        : 300;
+
+    if (amount <= 0) {
       return NextResponse.json(
         {
           success: false,
-          error: "Cannot book an appointment in the past."
+          error: "Doctor has no valid consultation fee configured."
         },
         { status: 400 }
       );
@@ -147,7 +178,6 @@ export async function POST(req: NextRequest) {
       timestamp: new Date()
     };
 
-    // 2) Create appointment
     const appointment = await Appointment.create({
       patient: authUser.id,
       doctor: doctorId,
@@ -159,7 +189,6 @@ export async function POST(req: NextRequest) {
       payment: paymentDetails
     });
 
-    // 3) Separate payment record
     await Payment.create({
       appointment: appointment._id,
       patient: authUser.id,

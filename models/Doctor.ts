@@ -4,11 +4,11 @@ import bcrypt from "bcryptjs";
 
 export interface IScheduleDay {
   dayOfWeek: number; // 0-6 (Sun-Sat)
-  clinic: mongoose.Types.ObjectId; // Clinic where this schedule applies
-  room?: mongoose.Types.ObjectId;  // Optional fixed room
-  startTime: string; // "09:00"
-  endTime: string;   // "17:00"
-  slotDurationMinutes: number; // e.g. 30
+  clinic: mongoose.Types.ObjectId;
+  room?: mongoose.Types.ObjectId;
+  startTime: string; // "HH:MM"
+  endTime: string;   // "HH:MM"
+  slotDurationMinutes: number;
   isActive: boolean;
 }
 
@@ -19,23 +19,17 @@ export interface IDoctor extends Document {
   password: string;
   qualifications?: string;
   specializations: string[];
-  clinic_affiliations: mongoose.Types.ObjectId[]; // Clinic refs
+  clinic_affiliations: mongoose.Types.ObjectId[];
   schedule_days: IScheduleDay[];
+  consultation_fee?: number;
   comparePassword(candidate: string): Promise<boolean>;
 }
 
 const ScheduleDaySchema = new Schema<IScheduleDay>(
   {
     dayOfWeek: { type: Number, required: true, min: 0, max: 6 },
-    clinic: {
-      type: Schema.Types.ObjectId,
-      ref: "Clinic",
-      required: true
-    },
-    room: {
-      type: Schema.Types.ObjectId,
-      ref: "Room"
-    },
+    clinic: { type: Schema.Types.ObjectId, ref: "Clinic", required: true },
+    room: { type: Schema.Types.ObjectId, ref: "Room", required: false },
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
     slotDurationMinutes: { type: Number, required: true, min: 5 },
@@ -55,11 +49,7 @@ const DoctorSchema = new Schema<IDoctor>(
       lowercase: true,
       trim: true
     },
-    password: {
-      type: String,
-      required: true,
-      select: false
-    },
+    password: { type: String, required: true, select: false },
     qualifications: { type: String, trim: true },
     specializations: { type: [String], default: [] },
     clinic_affiliations: [
@@ -68,15 +58,24 @@ const DoctorSchema = new Schema<IDoctor>(
         ref: "Clinic"
       }
     ],
-    schedule_days: { type: [ScheduleDaySchema], default: [] }
+    schedule_days: { type: [ScheduleDaySchema], default: [] },
+
+    consultation_fee: {
+      type: Number,
+      default: 300,
+      min: 0
+    }
   },
   { timestamps: true }
 );
 
-DoctorSchema.pre("save", async function (this: IDoctor, next) {
-  if (!this.isModified("password")) return next();
+DoctorSchema.pre("save", async function (next) {
+  const doctor = this as IDoctor;
+  // @ts-ignore
+  if (!doctor.isModified || !doctor.isModified("password")) return next();
+
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  doctor.password = await bcrypt.hash(doctor.password, salt);
   next();
 });
 
