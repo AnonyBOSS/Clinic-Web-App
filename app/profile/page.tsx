@@ -158,13 +158,13 @@ export default function ProfilePage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Basic information
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Full name
                 </label>
                 <Input
@@ -174,7 +174,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Phone
                 </label>
                 <Input
@@ -184,7 +184,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Email
                 </label>
                 <Input
@@ -192,7 +192,7 @@ export default function ProfilePage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Changing your email will impact how you sign in next time.
                 </p>
               </div>
@@ -200,12 +200,12 @@ export default function ProfilePage() {
 
             {isDoctor && (
               <>
-                <h2 className="pt-4 text-sm font-semibold text-slate-900">
+                <h2 className="pt-4 text-sm font-semibold text-slate-900 dark:text-white">
                   Professional details
                 </h2>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     Qualifications
                   </label>
                   <Input
@@ -215,14 +215,14 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     Specializations
                   </label>
                   <Input
                     value={specializationsStr}
                     onChange={(e) => setSpecializationsStr(e.target.value)}
                   />
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Separate multiple specializations with commas, e.g.
                     &nbsp;
                     <span className="italic">
@@ -234,13 +234,13 @@ export default function ProfilePage() {
               </>
             )}
 
-            <h2 className="pt-4 text-sm font-semibold text-slate-900">
+            <h2 className="pt-4 text-sm font-semibold text-slate-900 dark:text-white">
               Change password
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Current password
                 </label>
                 <Input
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   New password
                 </label>
                 <Input
@@ -279,10 +279,10 @@ export default function ProfilePage() {
         </Card>
 
         <Card className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Account overview
           </h2>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-slate-600 dark:text-slate-300">
             This profile is tied to your{" "}
             <span className="font-medium">
               {isDoctor ? "doctor" : "patient"}
@@ -290,7 +290,7 @@ export default function ProfilePage() {
             account. These changes will be reflected across bookings,
             appointments, and dashboards.
           </p>
-          <ul className="space-y-1 text-xs text-slate-600">
+          <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
             <li>• Keep your phone and email correct for clinic contact.</li>
             <li>• Doctors should keep their specializations accurate.</li>
             <li>• Use a strong password and don&apos;t share it.</li>

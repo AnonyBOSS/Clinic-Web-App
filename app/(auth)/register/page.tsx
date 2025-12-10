@@ -66,11 +66,11 @@ export default function RegisterPage() {
       title="Create an account"
       description="Sign up as a patient or a doctor."
     >
-      <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mx-auto max-w-md rounded-2xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 p-6 shadow-sm">
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Role */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Role
             </label>
             <Select
@@ -84,7 +84,7 @@ export default function RegisterPage() {
 
           {/* Full name */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Full name
             </label>
             <Input
@@ -97,7 +97,7 @@ export default function RegisterPage() {
 
           {/* Phone */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Phone
             </label>
             <Input
@@ -112,7 +112,7 @@ export default function RegisterPage() {
           {role === "DOCTOR" && (
             <>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Specialization
                 </label>
                 <Input
@@ -123,7 +123,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Qualifications
                 </label>
                 <Input
@@ -137,7 +137,7 @@ export default function RegisterPage() {
 
           {/* Email */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Email
             </label>
             <Input
@@ -152,7 +152,7 @@ export default function RegisterPage() {
 
           {/* Password */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Password
             </label>
             <Input

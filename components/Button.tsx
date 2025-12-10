@@ -21,15 +21,15 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-500 shadow-md hover:shadow-lg",
   secondary:
-    "bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-400",
+    "bg-slate-100 dark:bg-dark-700 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-dark-600 focus-visible:ring-slate-400",
   outline:
-    "border border-slate-300 text-slate-900 bg-white hover:bg-slate-50 focus-visible:ring-slate-400 hover:border-indigo-300",
+    "border border-slate-300 dark:border-dark-600 text-slate-900 dark:text-white bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-700 focus-visible:ring-slate-400 hover:border-indigo-300 dark:hover:border-indigo-500",
   destructive:
     "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-md hover:shadow-lg",
   gradient:
     "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white hover:from-indigo-700 hover:via-violet-700 hover:to-purple-700 focus-visible:ring-violet-500 shadow-lg hover:shadow-xl",
   ghost:
-    "text-slate-700 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-400"
+    "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 hover:text-slate-900 dark:hover:text-white focus-visible:ring-slate-400"
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -41,7 +41,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 const baseClasses =
-  "inline-flex items-center justify-center font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 transform hover:-translate-y-0.5 active:translate-y-0";
+  "inline-flex items-center justify-center font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 disabled:cursor-not-allowed disabled:opacity-60 transform hover:-translate-y-0.5 active:translate-y-0";
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (

@@ -121,6 +121,44 @@ export default function DoctorSchedulePage() {
       return;
     }
 
+    // Validate each schedule row
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+
+      // Validate start time is before end time
+      if (row.startTime >= row.endTime) {
+        setError(`Row ${i + 1}: Start time must be before end time.`);
+        setSaving(false);
+        return;
+      }
+
+      // Validate slot duration (must be between 5 and 240 minutes)
+      if (row.slotDurationMinutes < 5 || row.slotDurationMinutes > 240) {
+        setError(`Row ${i + 1}: Slot duration must be between 5 and 240 minutes.`);
+        setSaving(false);
+        return;
+      }
+
+      // Check for overlapping schedules on the same day and clinic
+      for (let j = i + 1; j < rows.length; j++) {
+        const otherRow = rows[j];
+        if (
+          row.dayOfWeek === otherRow.dayOfWeek &&
+          row.clinicId === otherRow.clinicId &&
+          row.isActive && otherRow.isActive
+        ) {
+          // Check if times overlap
+          if (
+            (row.startTime < otherRow.endTime && row.endTime > otherRow.startTime)
+          ) {
+            setError(`Rows ${i + 1} and ${j + 1} have overlapping times on the same day and clinic.`);
+            setSaving(false);
+            return;
+          }
+        }
+      }
+    }
+
     try {
       const res = await fetch("/api/doctors/schedule", {
         method: "PUT",
@@ -204,10 +242,10 @@ export default function DoctorSchedulePage() {
 
         {/* Consultation fee */}
         <Card className="p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Consultation fee
           </h2>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-slate-600 dark:text-slate-300">
             This fee will be used for all appointments booked with you. Patients
             will see it on the booking and confirmation pages.
           </p>
@@ -219,14 +257,14 @@ export default function DoctorSchedulePage() {
               value={consultationFee}
               onChange={(e) => setConsultationFee(e.target.value)}
             />
-            <span className="text-xs text-slate-600">EGP</span>
+            <span className="text-xs text-slate-600 dark:text-slate-300">EGP</span>
           </div>
         </Card>
 
         {/* Schedule rows */}
         <Card className="p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Weekly schedule
             </h2>
             <Button size="sm" variant="outline" onClick={addRow}>
@@ -235,7 +273,7 @@ export default function DoctorSchedulePage() {
           </div>
 
           {rows.length === 0 ? (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               No schedule rows yet. Add one to start defining your working
               hours.
             </p>
@@ -248,11 +286,11 @@ export default function DoctorSchedulePage() {
                 return (
                   <div
                     key={i}
-                    className="grid gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 md:grid-cols-6 md:items-end"
+                    className="grid gap-2 rounded-xl border border-slate-200/80 dark:border-dark-600 bg-slate-50/60 dark:bg-dark-800/60 p-3 md:grid-cols-6 md:items-end"
                   >
                     {/* Day */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-700">
+                      <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                         Day
                       </label>
                       <Select
@@ -271,7 +309,7 @@ export default function DoctorSchedulePage() {
 
                     {/* Clinic */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-700">
+                      <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                         Clinic
                       </label>
                       <Select
@@ -295,7 +333,7 @@ export default function DoctorSchedulePage() {
 
                     {/* Room */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-700">
+                      <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                         Room
                       </label>
                       <Select
@@ -317,7 +355,7 @@ export default function DoctorSchedulePage() {
 
                     {/* Time range */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-700">
+                      <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                         From
                       </label>
                       <Input
@@ -329,7 +367,7 @@ export default function DoctorSchedulePage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-700">
+                      <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                         To
                       </label>
                       <Input
@@ -343,7 +381,7 @@ export default function DoctorSchedulePage() {
 
                     {/* Duration & controls */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-700">
+                      <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                         Slot (min)
                       </label>
                       <div className="flex items-center gap-2">
@@ -357,7 +395,7 @@ export default function DoctorSchedulePage() {
                             })
                           }
                         />
-                        <label className="flex items-center gap-1 text-[11px] text-slate-600">
+                        <label className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300">
                           <input
                             type="checkbox"
                             checked={row.isActive}
@@ -382,7 +420,7 @@ export default function DoctorSchedulePage() {
             </div>
           )}
 
-          <div className="pt-2 border-t border-slate-100 flex justify-end gap-3">
+          <div className="pt-2 border-t border-slate-100 dark:border-dark-700 flex justify-end gap-3">
             <Button size="sm" isLoading={saving} onClick={handleSave}>
               Save schedule
             </Button>
@@ -397,7 +435,7 @@ export default function DoctorSchedulePage() {
             </Button>
           </div>
 
-          <p className="text-xs text-slate-500 mt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
             <strong>Note:</strong> After saving your schedule, click &quot;Generate Slots&quot; to create bookable time slots for patients.
             Slots are generated for the next 2 weeks based on your active schedule days.
           </p>

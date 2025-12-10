@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import PageShell from "@/components/PageShell";
 import Input from "@/components/Input";
 import Select from "@/components/Select";
@@ -11,6 +11,9 @@ type Role = "PATIENT" | "DOCTOR";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
+
   const [role, setRole] = useState<Role>("PATIENT");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +37,8 @@ export default function LoginPage() {
       if (!res.ok) {
         setError(data.error ?? "Something went wrong.");
       } else {
-        router.push("/dashboard");
+        // Redirect to intended destination or dashboard
+        router.push(redirectTo);
       }
     } catch {
       setError("Network error.");
@@ -48,10 +52,10 @@ export default function LoginPage() {
       title="Sign in"
       description="Access your clinics booking dashboard."
     >
-      <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mx-auto max-w-md rounded-2xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 p-6 shadow-sm">
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Role
             </label>
             <Select
@@ -64,7 +68,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Email
             </label>
             <Input
@@ -78,7 +82,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Password
             </label>
             <Input

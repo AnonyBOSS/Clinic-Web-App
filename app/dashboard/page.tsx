@@ -243,10 +243,10 @@ export default function DashboardPage() {
         prev.map((a) =>
           a._id === updated.id
             ? {
-                ...a,
-                status: updated.status,
-                notes: updated.notes ?? a.notes
-              }
+              ...a,
+              status: updated.status,
+              notes: updated.notes ?? a.notes
+            }
             : a
         )
       );
@@ -293,13 +293,13 @@ export default function DashboardPage() {
         {isPatient &&
           autoCancelledUpcoming.length > 0 &&
           !hideAutoCancelBanner && (
-            <Card className="border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs text-amber-900">
+            <Card className="border border-amber-200 dark:border-amber-700/50 bg-amber-50/80 dark:bg-amber-900/30 px-4 py-3 text-xs text-amber-900 dark:text-amber-100">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="mb-1 font-semibold">
                     Some of your appointments were cancelled.
                   </p>
-                  <p>
+                  <p className="dark:text-amber-200">
                     One or more of your upcoming appointments was automatically
                     cancelled because the doctor changed their schedule. Please
                     book a new suitable time.
@@ -307,7 +307,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   type="button"
-                  className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700 hover:text-amber-900"
+                  className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100"
                   onClick={() => {
                     setHideAutoCancelBanner(true);
                     if (typeof window !== "undefined") {
@@ -325,7 +325,7 @@ export default function DashboardPage() {
           )}
 
         {error && (
-          <Card className="border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-700">
+          <Card className="border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/30 px-4 py-2 text-xs text-red-700 dark:text-red-200">
             {error}
           </Card>
         )}
@@ -333,26 +333,26 @@ export default function DashboardPage() {
         {/* Top summary cards */}
         <div className="grid gap-3 sm:grid-cols-3">
           <Card className="px-4 py-3">
-            <p className="text-[11px] font-medium text-slate-500">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
               Today&apos;s appointments
             </p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">
+            <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
               {todaysAppointments.length}
             </p>
           </Card>
           <Card className="px-4 py-3">
-            <p className="text-[11px] font-medium text-slate-500">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
               Upcoming appointments
             </p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">
+            <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
               {totalUpcoming}
             </p>
           </Card>
           <Card className="px-4 py-3">
-            <p className="text-[11px] font-medium text-slate-500">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
               Past & completed
             </p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">
+            <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
               {totalPast}
             </p>
           </Card>
@@ -365,7 +365,7 @@ export default function DashboardPage() {
             {/* Today */}
             <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                   Today&apos;s appointments
                 </h2>
                 <div className="flex flex-wrap gap-2">
@@ -413,19 +413,19 @@ export default function DashboardPage() {
                             >
                               {appt.status.toLowerCase()}
                             </span>
-                            <span className="font-medium text-slate-900">
+                            <span className="font-medium text-slate-900 dark:text-white">
                               {appt.slot?.time} ·{" "}
                               {formatDateHuman(appt.slot?.date)}
                             </span>
                           </div>
-                          <p className="text-slate-700">
+                          <p className="text-slate-700 dark:text-slate-300">
                             <span className="font-medium">
                               {counterpartLabel(user.role)}:
                             </span>{" "}
                             {counterpart?.full_name ?? "N/A"}
                           </p>
                           {appt.clinic && (
-                            <p className="text-slate-600">
+                            <p className="text-slate-600 dark:text-slate-400">
                               <span className="font-medium">Clinic:</span>{" "}
                               {appt.clinic.name}
                               {appt.clinic.address?.city
@@ -434,7 +434,7 @@ export default function DashboardPage() {
                             </p>
                           )}
                           {appt.room && (
-                            <p className="text-slate-600">
+                            <p className="text-slate-600 dark:text-slate-400">
                               <span className="font-medium">Room:</span>{" "}
                               {appt.room.room_number}
                             </p>
@@ -443,8 +443,8 @@ export default function DashboardPage() {
 
                         <div className="flex items-center gap-2 self-start sm:self-center">
                           {isPatient && appt.payment && (
-                            <div className="text-right text-[11px] text-slate-600">
-                              <div className="font-semibold text-slate-800">
+                            <div className="text-right text-[11px] text-slate-600 dark:text-slate-400">
+                              <div className="font-semibold text-slate-800 dark:text-slate-200">
                                 {appt.payment.amount} EGP
                               </div>
                               <div className="capitalize">
@@ -473,7 +473,7 @@ export default function DashboardPage() {
 
             {/* Upcoming */}
             <section className="space-y-2">
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Upcoming appointments
               </h2>
               {upcomingAppointments.length === 0 ? (
@@ -506,19 +506,19 @@ export default function DashboardPage() {
                             >
                               {appt.status.toLowerCase()}
                             </span>
-                            <span className="font-medium text-slate-900">
+                            <span className="font-medium text-slate-900 dark:text-white">
                               {appt.slot?.time} ·{" "}
                               {formatDateHuman(appt.slot?.date)}
                             </span>
                           </div>
-                          <p className="text-slate-700">
+                          <p className="text-slate-700 dark:text-slate-300">
                             <span className="font-medium">
                               {counterpartLabel(user.role)}:
                             </span>{" "}
                             {counterpart?.full_name ?? "N/A"}
                           </p>
                           {appt.clinic && (
-                            <p className="text-slate-600">
+                            <p className="text-slate-600 dark:text-slate-400">
                               <span className="font-medium">Clinic:</span>{" "}
                               {appt.clinic.name}
                               {appt.clinic.address?.city
@@ -530,8 +530,8 @@ export default function DashboardPage() {
 
                         <div className="flex items-center gap-2 self-start sm:self-center">
                           {isPatient && appt.payment && (
-                            <div className="text-right text-[11px] text-slate-600">
-                              <div className="font-semibold text-slate-800">
+                            <div className="text-right text-[11px] text-slate-600 dark:text-slate-400">
+                              <div className="font-semibold text-slate-800 dark:text-slate-200">
                                 {appt.payment.amount} EGP
                               </div>
                               <div className="capitalize">
@@ -560,7 +560,7 @@ export default function DashboardPage() {
 
             {/* Past */}
             <section className="space-y-2">
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Past & completed
               </h2>
               {pastAppointments.length === 0 ? (
@@ -588,19 +588,19 @@ export default function DashboardPage() {
                             >
                               {appt.status.toLowerCase()}
                             </span>
-                            <span className="font-medium text-slate-900">
+                            <span className="font-medium text-slate-900 dark:text-white">
                               {appt.slot?.time} ·{" "}
                               {formatDateHuman(appt.slot?.date)}
                             </span>
                           </div>
-                          <p className="text-slate-700">
+                          <p className="text-slate-700 dark:text-slate-300">
                             <span className="font-medium">
                               {counterpartLabel(user.role)}:
                             </span>{" "}
                             {counterpart?.full_name ?? "N/A"}
                           </p>
                           {appt.clinic && (
-                            <p className="text-slate-600">
+                            <p className="text-slate-600 dark:text-slate-400">
                               <span className="font-medium">Clinic:</span>{" "}
                               {appt.clinic.name}
                               {appt.clinic.address?.city
@@ -609,21 +609,21 @@ export default function DashboardPage() {
                             </p>
                           )}
                           {appt.notes && (
-                            <p className="text-[11px] text-slate-500">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
                               Notes: {appt.notes}
                             </p>
                           )}
                         </div>
 
                         {isPatient && appt.payment && (
-                          <div className="text-right text-[11px] text-slate-600">
-                            <div className="font-semibold text-slate-800">
+                          <div className="text-right text-[11px] text-slate-600 dark:text-slate-400">
+                            <div className="font-semibold text-slate-800 dark:text-slate-200">
                               {appt.payment.amount} EGP
                             </div>
                             <div className="capitalize">
                               {appt.payment.method.toLowerCase()}
                             </div>
-                            <div className="mt-1 text-[10px] text-slate-400">
+                            <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
                               {new Date(
                                 appt.payment.timestamp
                               ).toLocaleString()}
@@ -640,24 +640,24 @@ export default function DashboardPage() {
 
           {/* RIGHT: profile summary */}
           <Card className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Profile summary
             </h2>
-            <div className="space-y-2 text-xs text-slate-600">
+            <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
               <p>
-                <span className="font-medium text-slate-800">Full name:</span>{" "}
+                <span className="font-medium text-slate-800 dark:text-slate-200">Full name:</span>{" "}
                 {user.full_name}
               </p>
               <p>
-                <span className="font-medium text-slate-800">Email:</span>{" "}
+                <span className="font-medium text-slate-800 dark:text-slate-200">Email:</span>{" "}
                 {user.email}
               </p>
               <p>
-                <span className="font-medium text-slate-800">Phone:</span>{" "}
+                <span className="font-medium text-slate-800 dark:text-slate-200">Phone:</span>{" "}
                 {user.phone}
               </p>
               <p>
-                <span className="font-medium text-slate-800">Role:</span>{" "}
+                <span className="font-medium text-slate-800 dark:text-slate-200">Role:</span>{" "}
                 {roleLabel}
               </p>
 
@@ -665,7 +665,7 @@ export default function DashboardPage() {
                 <>
                   {user.qualifications && (
                     <p>
-                      <span className="font-medium text-slate-800">
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
                         Qualifications:
                       </span>{" "}
                       {user.qualifications}
@@ -673,7 +673,7 @@ export default function DashboardPage() {
                   )}
                   {user.specializations && user.specializations.length > 0 && (
                     <p>
-                      <span className="font-medium text-slate-800">
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
                         Specializations:
                       </span>{" "}
                       {user.specializations.join(", ")}
@@ -683,7 +683,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="border-t border-slate-100 pt-2 text-xs text-slate-500 space-y-1">
+            <div className="border-t border-slate-100 dark:border-dark-700 pt-2 text-xs text-slate-500 dark:text-slate-400 space-y-1">
               {isPatient ? (
                 <>
                   <p>

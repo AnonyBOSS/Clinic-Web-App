@@ -77,11 +77,27 @@ export default function BookPage() {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
-  // Load clinics + doctors
+  // Check authentication + load clinics + doctors
   useEffect(() => {
     async function load() {
       try {
+        // Check if user is authenticated
+        const authRes = await fetch("/api/auth/me", { credentials: "include" });
+        if (!authRes.ok) {
+          setIsAuthenticated(false);
+          router.push("/login?redirect=/book");
+          return;
+        }
+
+        const authData = await authRes.json();
+        if (authData.data?.role !== "PATIENT") {
+          setError("Only patients can book appointments.");
+          setLoadingInitial(false);
+          return;
+        }
+
         const [clinicsRes, doctorsRes] = await Promise.all([
           fetch("/api/clinics", { credentials: "include" }),
           fetch("/api/doctors", { credentials: "include" })
@@ -104,7 +120,7 @@ export default function BookPage() {
     }
 
     load();
-  }, []);
+  }, [router]);
 
   async function fetchSlots(args?: {
     doctorId?: string;
@@ -115,10 +131,7 @@ export default function BookPage() {
     const clinicId = args?.clinicId ?? selectedClinicId;
     const dateVal = args?.date ?? date;
 
-    if (!doctorId && !clinicId && !dateVal) {
-      setSlots([]);
-      return;
-    }
+    // Removed early return - now fetches all slots when no filters are set
 
     setError(null);
     setLoadingSlots(true);
@@ -231,7 +244,7 @@ export default function BookPage() {
             <div className="grid gap-4 md:grid-cols-3">
               {/* Clinic */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Clinic
                 </label>
                 <Select
@@ -249,7 +262,7 @@ export default function BookPage() {
 
               {/* Doctor */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Doctor
                 </label>
                 <Select
@@ -270,7 +283,7 @@ export default function BookPage() {
 
               {/* Date */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Date (optional)
                 </label>
                 <Input
@@ -281,17 +294,33 @@ export default function BookPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <Button type="submit" isLoading={loadingSlots}>
                 Refresh slots
               </Button>
+              {(selectedClinicId || selectedDoctorId || date) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedClinicId("");
+                    setSelectedDoctorId("");
+                    setDate("");
+                    setSelectedSlotId(null);
+                    setSelectedRoomId(null);
+                    fetchSlots({});
+                  }}
+                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  Clear filters
+                </button>
+              )}
               {error && <p className="text-xs text-red-600">{error}</p>}
             </div>
           </form>
 
           {/* Slots list */}
           <div className="mt-4 space-y-3">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Available slots
             </h2>
             {loadingSlots ? (
@@ -306,11 +335,10 @@ export default function BookPage() {
                 {slots.map((slot) => {
                   const selected = selectedSlotId === slot._id;
                   const clinicLabel = slot.clinic
-                    ? `${slot.clinic.name}${
-                        slot.clinic.address?.city
-                          ? " – " + slot.clinic.address.city
-                          : ""
-                      }`
+                    ? `${slot.clinic.name}${slot.clinic.address?.city
+                      ? " – " + slot.clinic.address.city
+                      : ""
+                    }`
                     : "Clinic";
                   const doctorLabel = slot.doctor
                     ? slot.doctor.full_name
@@ -321,19 +349,25 @@ export default function BookPage() {
                       key={slot._id}
                       type="button"
                       onClick={() => handleSlotSelect(slot)}
-                      className={`flex flex-col rounded-xl border px-3 py-2 text-left text-xs transition ${
-                        selected
-                          ? "border-indigo-600 bg-indigo-50 text-indigo-900"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-indigo-400"
-                      }`}
+                      className={`flex flex-col rounded-xl border px-3 py-2 text-left text-xs transition ${selected
+                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-900 dark:text-indigo-100"
+                        : "border-slate-200 dark:border-dark-600 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-200 hover:border-indigo-400"
+                        }`}
                     >
-                      <span className="font-medium">
-                        {slot.date} · {slot.time}
-                      </span>
-                      <span className="mt-1 text-[10px] text-slate-500">
+                      <div className="flex justify-between items-start w-full">
+                        <span className="font-medium">
+                          {slot.date} · {slot.time}
+                        </span>
+                        {slot.doctor?.consultation_fee !== undefined && (
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            EGP {slot.doctor.consultation_fee}
+                          </span>
+                        )}
+                      </div>
+                      <span className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
                         {clinicLabel}
                       </span>
-                      <span className="mt-0.5 text-[10px] text-slate-500">
+                      <span className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
                         Room {slot.room.room_number}
                         {doctorLabel ? ` · ${doctorLabel}` : ""}
                       </span>
@@ -347,31 +381,31 @@ export default function BookPage() {
 
         {/* Right: summary & continue */}
         <Card className="space-y-4">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Appointment summary
           </h2>
-          <div className="space-y-2 text-xs text-slate-600">
+          <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
             <p>
-              <span className="font-medium text-slate-800">Clinic:</span>{" "}
+              <span className="font-medium text-slate-800 dark:text-slate-200">Clinic:</span>{" "}
               {selectedClinic ? selectedClinic.name : "Any clinic"}
             </p>
             <p>
-              <span className="font-medium text-slate-800">Doctor:</span>{" "}
+              <span className="font-medium text-slate-800 dark:text-slate-200">Doctor:</span>{" "}
               {selectedDoctor ? selectedDoctor.full_name : "Any doctor"}
             </p>
             <p>
-              <span className="font-medium text-slate-800">Date filter:</span>{" "}
+              <span className="font-medium text-slate-800 dark:text-slate-200">Date filter:</span>{" "}
               {date || "Any upcoming date"}
             </p>
             <p>
-              <span className="font-medium text-slate-800">Selected time:</span>{" "}
+              <span className="font-medium text-slate-800 dark:text-slate-200">Selected time:</span>{" "}
               {selectedSlotId
                 ? slots.find((s) => s._id === selectedSlotId)?.time ??
-                  "Selected"
+                "Selected"
                 : "Not selected"}
             </p>
             <p>
-              <span className="font-medium text-slate-800">
+              <span className="font-medium text-slate-800 dark:text-slate-200">
                 Consultation fee:
               </span>{" "}
               {selectedDoctor?.consultation_fee

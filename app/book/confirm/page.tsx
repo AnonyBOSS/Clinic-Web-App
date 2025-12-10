@@ -215,36 +215,36 @@ export default function ConfirmBookingPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: appointment details */}
         <Card className="space-y-4 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Appointment details
           </h2>
-          <div className="space-y-2 text-xs text-slate-700">
+          <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
             <p>
-              <span className="font-medium text-slate-900">Doctor:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">Doctor:</span>{" "}
               {doctor.full_name}
               {doctor.specializations && doctor.specializations.length > 0
                 ? ` – ${doctor.specializations.join(", ")}`
                 : ""}
             </p>
             <p>
-              <span className="font-medium text-slate-900">Clinic:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">Clinic:</span>{" "}
               {clinic.name}
               {clinic.address?.city ? ` – ${clinic.address.city}` : ""}
             </p>
             <p>
-              <span className="font-medium text-slate-900">Room:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">Room:</span>{" "}
               {slot.room.room_number}
             </p>
             <p>
-              <span className="font-medium text-slate-900">Date:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">Date:</span>{" "}
               {slot.date}
             </p>
             <p>
-              <span className="font-medium text-slate-900">Time:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">Time:</span>{" "}
               {slot.time}
             </p>
             <p>
-              <span className="font-medium text-slate-900">
+              <span className="font-medium text-slate-900 dark:text-white">
                 Consultation fee:
               </span>{" "}
               {fee} EGP
@@ -254,12 +254,12 @@ export default function ConfirmBookingPage() {
 
         {/* Right: payment */}
         <Card className="space-y-4">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Payment & confirmation
           </h2>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Payment method
             </label>
             <Select
@@ -272,7 +272,7 @@ export default function ConfirmBookingPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Notes for the doctor (optional)
             </label>
             <Input
@@ -284,7 +284,7 @@ export default function ConfirmBookingPage() {
 
           {error && <p className="text-xs text-red-600">{error}</p>}
 
-          <div className="pt-2 border-t border-slate-100 flex flex-col gap-2 text-xs text-slate-600">
+          <div className="pt-2 border-t border-slate-100 dark:border-dark-700 flex flex-col gap-2 text-xs text-slate-600 dark:text-slate-300">
             <p>
               You will pay <span className="font-semibold">{fee} EGP</span>{" "}
               ({method.toLowerCase()}) for this consultation.

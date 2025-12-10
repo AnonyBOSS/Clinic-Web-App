@@ -27,16 +27,7 @@ export async function GET(req: NextRequest) {
     const clinicId = searchParams.get("clinicId") || undefined;
     const date = searchParams.get("date") || undefined;
 
-    if (!doctorId && !clinicId && !date) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Provide at least doctorId, clinicId, or date."
-        },
-        { status: 400 }
-      );
-    }
-
+    // Allow fetching all available slots when no filters are provided
     const today = todayDateLocal();
     const nowTime = nowTimeLocal();
 
@@ -57,6 +48,7 @@ export async function GET(req: NextRequest) {
       .populate("room", "room_number status clinic")
       .populate("clinic", "name address.city address.governorate")
       .populate("doctor", "full_name specializations consultation_fee")
+      .sort({ date: 1, time: 1 })
       .exec();
 
     const cleaned: any[] = [];

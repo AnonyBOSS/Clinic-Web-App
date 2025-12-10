@@ -83,6 +83,14 @@ export async function POST(req: NextRequest) {
     const fromDate = toDateOnly(fromStr)!;
     const toDate = toDateOnly(toStr)!;
 
+    // Delete existing AVAILABLE slots for this doctor in the date range
+    // This ensures schedule changes (like slot duration) take effect
+    await Slot.deleteMany({
+      doctor: doctor._id,
+      status: "AVAILABLE",
+      date: { $gte: fromStr, $lte: toStr }
+    }).exec();
+
     let createdCount = 0;
     let current = new Date(fromDate.getTime());
 

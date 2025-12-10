@@ -141,14 +141,14 @@ export default function HomePage() {
               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 text-white">
                 <SparklesIcon />
               </span>
-              <span className="text-xs font-medium text-slate-700">
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
                 Clinify · Smart clinic appointment platform
               </span>
             </div>
 
             {/* Title */}
             <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight ${mounted ? 'animate-fade-in-up delay-100' : 'opacity-0'}`}>
-              <span className="text-slate-900">{heroTitle.split(',')[0]}</span>
+              <span className="text-slate-900 dark:text-white">{heroTitle.split(',')[0]}</span>
               {heroTitle.includes(',') && (
                 <>
                   <span className="text-gradient">,{heroTitle.split(',')[1]}</span>
@@ -162,7 +162,7 @@ export default function HomePage() {
             </h1>
 
             {/* Subtitle */}
-            <p className={`text-lg text-slate-600 max-w-xl leading-relaxed ${mounted ? 'animate-fade-in-up delay-200' : 'opacity-0'}`}>
+            <p className={`text-lg text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed ${mounted ? 'animate-fade-in-up delay-200' : 'opacity-0'}`}>
               {heroSubtitle}
             </p>
 
@@ -192,7 +192,7 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <Link href="/book">
+                  <Link href="/login?redirect=/book">
                     <Button size="lg" className="btn-gradient btn-glow px-8 py-3 text-base font-semibold rounded-xl">
                       Book an appointment
                     </Button>
@@ -209,30 +209,30 @@ export default function HomePage() {
             {/* Stats row */}
             <div className={`flex flex-wrap gap-6 pt-6 ${mounted ? 'animate-fade-in-up delay-400' : 'opacity-0'}`}>
               <div className="stat-card flex items-center gap-3 min-w-[140px]">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
                   <ClockIcon />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-slate-900">24/7</p>
-                  <p className="text-xs text-slate-500">Online access</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">24/7</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Online access</p>
                 </div>
               </div>
               <div className="stat-card flex items-center gap-3 min-w-[140px]">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
                   <PhoneIcon />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-slate-900">Zero</p>
-                  <p className="text-xs text-slate-500">Phone calls</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">Zero</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Phone calls</p>
                 </div>
               </div>
               <div className="stat-card flex items-center gap-3 min-w-[140px]">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-100 text-violet-600">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
                   <ShieldIcon />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-slate-900">100%</p>
-                  <p className="text-xs text-slate-500">Validated</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">100%</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Validated</p>
                 </div>
               </div>
             </div>
@@ -255,8 +255,8 @@ export default function HomePage() {
                     <HeartIcon />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Real clinic environments</p>
-                    <p className="text-xs text-slate-600">Built for everyday patient visits</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Real clinic environments</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300">Built for everyday patient visits</p>
                   </div>
                 </div>
               </div>
@@ -271,10 +271,10 @@ export default function HomePage() {
         {/* THREE-COLUMN FEATURE CARDS */}
         <section className={`relative z-10 ${mounted ? 'animate-fade-in-up delay-300' : 'opacity-0'}`}>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
               Designed for <span className="text-gradient">everyone</span>
             </h2>
-            <p className="text-slate-600 max-w-2xl mx-auto">
+            <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
               Whether you&apos;re a patient looking for care or a doctor managing your practice, Clinify adapts to your needs.
             </p>
           </div>
@@ -285,15 +285,15 @@ export default function HomePage() {
               <div className="feature-icon">
                 <UserGroupIcon />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 For patients
               </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 Search clinics, see each doctor&apos;s available slots, and book
                 in a few clicks. Get a clear summary of your upcoming appointments
                 and receive automatic updates when doctors change schedules.
               </p>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
                   <span>Easy online booking</span>
@@ -314,15 +314,15 @@ export default function HomePage() {
               <div className="feature-icon">
                 <CalendarIcon />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 For doctors
               </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 Define working days per clinic and room, prevent overlapping
                 schedules, and automatically generate valid slots. Set your own
                 consultation fee and let Clinify handle the rest.
               </p>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
                   <span>Flexible scheduling</span>
@@ -343,15 +343,15 @@ export default function HomePage() {
               <div className="feature-icon">
                 <BuildingIcon />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 For clinics
               </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 Centralize booking across multiple branches and rooms. Reduce
                 phone traffic, avoid double-booking, and have a single source of
                 truth for clinic occupancy.
               </p>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
                   <span>Centralized management</span>
@@ -372,12 +372,12 @@ export default function HomePage() {
         {/* HOW IT WORKS + WHY CLINICS */}
         <section className={`relative z-10 grid gap-8 lg:grid-cols-2 ${mounted ? 'animate-fade-in-up delay-400' : 'opacity-0'}`}>
           {/* How Clinify Works */}
-          <Card className="p-8 space-y-6 bg-gradient-to-br from-indigo-50 via-white to-violet-50 border-indigo-100/50">
+          <Card className="p-8 space-y-6 bg-gradient-to-br from-indigo-50 via-white to-violet-50 dark:from-indigo-950/30 dark:via-dark-800 dark:to-violet-950/30 border-indigo-100/50 dark:border-indigo-900/30">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 text-white">
                 <SparklesIcon />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 How Clinify works
               </h2>
             </div>
@@ -392,7 +392,7 @@ export default function HomePage() {
                   <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold">
                     {item.step}
                   </div>
-                  <p className="text-sm text-slate-700 pt-1">{item.text}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 pt-1">{item.text}</p>
                 </li>
               ))}
             </ol>
@@ -401,10 +401,10 @@ export default function HomePage() {
           {/* Why Clinics Choose Clinify */}
           <Card className="p-8 space-y-6">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
                 <ShieldIcon />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Why clinics choose Clinify
               </h2>
             </div>
@@ -416,10 +416,10 @@ export default function HomePage() {
                 "Gives both patients and doctors a clear view of upcoming visits"
               ].map((item, i) => (
                 <li key={i} className="flex gap-3 items-start">
-                  <div className="flex-shrink-0 mt-0.5 text-emerald-500">
+                  <div className="flex-shrink-0 mt-0.5 text-emerald-500 dark:text-emerald-400">
                     <CheckCircleIcon />
                   </div>
-                  <p className="text-sm text-slate-600">{item}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">{item}</p>
                 </li>
               ))}
             </ul>
@@ -481,7 +481,7 @@ export default function HomePage() {
         </section>
 
         {/* FOOTER */}
-        <footer className={`relative z-10 border-t border-slate-200/50 pt-12 pb-6 ${mounted ? 'animate-fade-in delay-600' : 'opacity-0'}`}>
+        <footer className={`relative z-10 border-t border-slate-200/50 dark:border-dark-700 pt-12 pb-6 ${mounted ? 'animate-fade-in delay-600' : 'opacity-0'}`}>
           <div className="grid gap-8 md:grid-cols-4 mb-8">
             {/* Brand */}
             <div className="md:col-span-2">
@@ -489,9 +489,9 @@ export default function HomePage() {
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-sm font-bold text-white">
                   CF
                 </span>
-                <span className="text-lg font-bold text-slate-900">Clinify</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-white">Clinify</span>
               </div>
-              <p className="text-sm text-slate-600 max-w-sm leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm leading-relaxed">
                 Smart clinic appointment booking for patients and doctors.
                 Built for managing real clinic workflows with secure booking,
                 clear pricing, and smart schedules.
@@ -500,28 +500,28 @@ export default function HomePage() {
 
             {/* Quick Links */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-4">Quick Links</h3>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li><Link href="/book" className="hover:text-indigo-600 transition-colors">Book Appointment</Link></li>
-                <li><Link href="/dashboard" className="hover:text-indigo-600 transition-colors">Dashboard</Link></li>
-                <li><Link href="/login" className="hover:text-indigo-600 transition-colors">Login</Link></li>
-                <li><Link href="/register" className="hover:text-indigo-600 transition-colors">Register</Link></li>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Quick Links</h3>
+              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                <li><Link href="/book" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Book Appointment</Link></li>
+                <li><Link href="/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Dashboard</Link></li>
+                <li><Link href="/login" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Login</Link></li>
+                <li><Link href="/register" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Register</Link></li>
               </ul>
             </div>
 
             {/* Contact */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-4">Support</h3>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li>Help Center</li>
-                <li>Contact Us</li>
-                <li>Privacy Policy</li>
-                <li>Terms of Service</li>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Support</h3>
+              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                <li><Link href="/help" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Help Center</Link></li>
+                <li><Link href="/contact" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Contact Us</Link></li>
+                <li><Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-8 border-t border-slate-200/50 text-xs text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-8 border-t border-slate-200/50 dark:border-dark-700 text-xs text-slate-500 dark:text-slate-400">
             <p>© {new Date().getFullYear()} Clinify. All rights reserved.</p>
             <div className="flex items-center gap-4">
               <span>Secure booking</span>

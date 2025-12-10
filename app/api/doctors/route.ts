@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     }
 
     const doctors = await Doctor.find(filter)
-      .select("full_name email phone qualifications specializations clinic_affiliations")
+      .select("full_name email phone qualifications specializations clinic_affiliations consultation_fee")
       .populate("clinic_affiliations", "name address.city")
       .exec();
 
