@@ -64,7 +64,8 @@ export async function GET(req: NextRequest) {
       .sort({ name: 1 })
       .exec();
 
-    const rooms = await Room.find()
+    // ✅ Only return non-maintenance rooms
+    const rooms = await Room.find({ status: { $ne: "MAINTENANCE" } })
       .select("room_number status clinic")
       .sort({ room_number: 1 })
       .exec();
@@ -178,6 +179,35 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    // ✅ Prevent using maintenance rooms
+    const roomIds = Array.from(
+      new Set(
+        scheduleDays
+          .map((d) => d.roomId)
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+
+    if (roomIds.length > 0) {
+      const badRooms = await Room.find({
+        _id: { $in: roomIds },
+        status: "MAINTENANCE"
+      })
+        .select("room_number")
+        .exec();
+
+      if (badRooms.length > 0) {
+        const list = badRooms.map((r) => `Room ${r.room_number}`).join(", ");
+        return NextResponse.json(
+          {
+            success: false,
+            error: `You cannot schedule shifts in rooms under maintenance: ${list}.`
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const doctor = await Doctor.findById(auth.id).exec();
     if (!doctor) {
       return NextResponse.json(
@@ -198,7 +228,7 @@ export async function PUT(req: NextRequest) {
 
     await doctor.save();
 
-    // Auto-cancel future appointments that no longer match
+    // Auto-cancel and clean up slots as before
     try {
       const activeSchedule = doctor.schedule_days.filter((s) => s.isActive);
       if (activeSchedule.length > 0) {
@@ -246,7 +276,7 @@ export async function PUT(req: NextRequest) {
           }
         }
 
-        // Also remove future AVAILABLE slots that no longer match schedule
+        // Remove future AVAILABLE slots that no longer match schedule
         const futureSlots = await Slot.find({
           doctor: doctor._id,
           date: { $gte: todayStr },

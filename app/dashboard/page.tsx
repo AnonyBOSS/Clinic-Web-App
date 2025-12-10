@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -50,22 +51,59 @@ type AppointmentItem = {
     room_number: string;
   };
   slot?: {
-    date: string; // "YYYY-MM-DD"
-    time: string; // "HH:MM"
+    date: string; // YYYY-MM-DD
+    time: string; // HH:MM
   };
 };
 
 function parseDate(dateStr?: string, timeStr?: string): Date | null {
   if (!dateStr) return null;
-  const full = timeStr ? `${dateStr}T${timeStr}:00Z` : `${dateStr}T00:00:00Z`;
+  const full = timeStr ? `${dateStr}T${timeStr}:00` : `${dateStr}T00:00:00`;
   const d = new Date(full);
   return isNaN(d.getTime()) ? null : d;
+}
+
+function formatDateHuman(dateStr?: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString(undefined, {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
 }
 
 function isFutureAppointment(appt: AppointmentItem): boolean {
   const d = parseDate(appt.slot?.date, appt.slot?.time);
   if (!d) return false;
   return d.getTime() > Date.now();
+}
+
+function canPatientCancel(appt: AppointmentItem): boolean {
+  if (appt.status === "CANCELLED" || appt.status === "COMPLETED") {
+    return false;
+  }
+  return isFutureAppointment(appt);
+}
+
+function statusPillClasses(status: AppointmentItem["status"]): string {
+  switch (status) {
+    case "BOOKED":
+      return "bg-sky-50 text-sky-700 border-sky-100";
+    case "CONFIRMED":
+      return "bg-emerald-50 text-emerald-700 border-emerald-100";
+    case "COMPLETED":
+      return "bg-slate-50 text-slate-700 border-slate-100";
+    case "CANCELLED":
+    default:
+      return "bg-red-50 text-red-700 border-red-100";
+  }
+}
+
+function counterpartLabel(userRole: Role) {
+  return userRole === "PATIENT" ? "Doctor" : "Patient";
 }
 
 export default function DashboardPage() {
@@ -75,7 +113,17 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [cancelLoadingId, setCancelLoadingId] = useState<string | null>(null);
 
+  // Banner hide state (per tab)
+  const [hideAutoCancelBanner, setHideAutoCancelBanner] = useState(false);
+
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const seen = window.sessionStorage.getItem("autoCancelBannerSeen");
+      if (seen === "true") {
+        setHideAutoCancelBanner(true);
+      }
+    }
+
     async function load() {
       try {
         const meRes = await fetch("/api/auth/me", {
@@ -145,7 +193,7 @@ export default function DashboardPage() {
     () =>
       appointments.filter(
         (a) =>
-          (a.slot?.date ?? "") >= todayStr &&
+          (a.slot?.date ?? "") > todayStr &&
           a.status !== "CANCELLED" &&
           a.status !== "COMPLETED"
       ),
@@ -171,17 +219,13 @@ export default function DashboardPage() {
     [appointments]
   );
 
-  async function handleCancel(apptId: string) {
-    if (!user || user.role !== "PATIENT") return;
-    setError(null);
-    setCancelLoadingId(apptId);
-
+  async function handleCancel(appointmentId: string) {
+    setCancelLoadingId(appointmentId);
     try {
-      const res = await fetch(`/api/appointments/${apptId}/cancel`, {
+      const res = await fetch(`/api/appointments/${appointmentId}/cancel`, {
         method: "POST",
         credentials: "include"
       });
-
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
@@ -189,21 +233,26 @@ export default function DashboardPage() {
         return;
       }
 
-      const updated = data?.data as { id: string; status: string; notes?: string };
+      const updated = data?.data as {
+        id: string;
+        status: AppointmentItem["status"];
+        notes?: string;
+      };
 
       setAppointments((prev) =>
         prev.map((a) =>
           a._id === updated.id
             ? {
                 ...a,
-                status: updated.status as AppointmentItem["status"],
+                status: updated.status,
                 notes: updated.notes ?? a.notes
               }
             : a
         )
       );
-    } catch {
+    } catch (err) {
       setError("Network error while cancelling appointment.");
+      console.error("Cancel request failed", err);
     } finally {
       setCancelLoadingId(null);
     }
@@ -231,48 +280,8 @@ export default function DashboardPage() {
   const isPatient = user.role === "PATIENT";
   const roleLabel = isPatient ? "Patient" : "Doctor";
 
-  const nextAppointment = upcomingAppointments[0];
-
-  const counterpartLabel = (appt: AppointmentItem) =>
-    isPatient
-      ? appt.doctor?.full_name ?? "Doctor"
-      : appt.patient?.full_name ?? "Patient";
-
-  const clinicLocation = (appt: AppointmentItem) => {
-    if (!appt.clinic) return "Clinic";
-    const city = appt.clinic.address?.city;
-    return city ? `${appt.clinic.name} · ${city}` : appt.clinic.name;
-  };
-
-  const slotLabel = (appt: AppointmentItem) =>
-    appt.slot ? `${appt.slot.date} · ${appt.slot.time}` : "";
-
-  const statusBadge = (appt: AppointmentItem) => {
-    const base =
-      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium";
-
-    if (appt.status === "BOOKED")
-      return <span className={`${base} bg-indigo-50 text-indigo-700`}>Booked</span>;
-    if (appt.status === "CONFIRMED")
-      return (
-        <span className={`${base} bg-emerald-50 text-emerald-700`}>
-          Confirmed
-        </span>
-      );
-    if (appt.status === "COMPLETED")
-      return (
-        <span className={`${base} bg-slate-100 text-slate-600`}>Completed</span>
-      );
-
-    // CANCELLED
-    const isAuto =
-      appt.notes?.includes("[Auto-cancelled due to schedule update]") ?? false;
-    return (
-      <span className={`${base} bg-red-50 text-red-700`}>
-        {isAuto ? "Cancelled (doctor changed schedule)" : "Cancelled"}
-      </span>
-    );
-  };
+  const totalUpcoming = todaysAppointments.length + upcomingAppointments.length;
+  const totalPast = pastAppointments.length;
 
   return (
     <PageShell
@@ -280,19 +289,40 @@ export default function DashboardPage() {
       description={`You are signed in as ${roleLabel.toLowerCase()}.`}
     >
       <div className="space-y-4">
-        {/* Auto-cancel banner for patients */}
-        {isPatient && autoCancelledUpcoming.length > 0 && (
-          <Card className="border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs text-amber-900">
-            <p className="font-semibold mb-1">
-              Some of your appointments were cancelled.
-            </p>
-            <p>
-              One or more of your upcoming appointments was automatically
-              cancelled because the doctor changed their schedule. Please book
-              a new suitable time.
-            </p>
-          </Card>
-        )}
+        {/* Auto-cancel banner for patients, dismissible per tab */}
+        {isPatient &&
+          autoCancelledUpcoming.length > 0 &&
+          !hideAutoCancelBanner && (
+            <Card className="border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs text-amber-900">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="mb-1 font-semibold">
+                    Some of your appointments were cancelled.
+                  </p>
+                  <p>
+                    One or more of your upcoming appointments was automatically
+                    cancelled because the doctor changed their schedule. Please
+                    book a new suitable time.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700 hover:text-amber-900"
+                  onClick={() => {
+                    setHideAutoCancelBanner(true);
+                    if (typeof window !== "undefined") {
+                      window.sessionStorage.setItem(
+                        "autoCancelBannerSeen",
+                        "true"
+                      );
+                    }
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            </Card>
+          )}
 
         {error && (
           <Card className="border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-700">
@@ -300,19 +330,48 @@ export default function DashboardPage() {
           </Card>
         )}
 
+        {/* Top summary cards */}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Card className="px-4 py-3">
+            <p className="text-[11px] font-medium text-slate-500">
+              Today&apos;s appointments
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">
+              {todaysAppointments.length}
+            </p>
+          </Card>
+          <Card className="px-4 py-3">
+            <p className="text-[11px] font-medium text-slate-500">
+              Upcoming appointments
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">
+              {totalUpcoming}
+            </p>
+          </Card>
+          <Card className="px-4 py-3">
+            <p className="text-[11px] font-medium text-slate-500">
+              Past & completed
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">
+              {totalPast}
+            </p>
+          </Card>
+        </div>
+
+        {/* Main content grid: left = appointments, right = profile */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left column */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Top card: Today / Next appointment */}
-            <Card className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* LEFT: Today / Upcoming / Past */}
+          <div className="space-y-4 lg:col-span-2">
+            {/* Today */}
+            <section className="space-y-2">
+              <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-900">
-                  {isPatient ? "Your next appointment" : "Today’s schedule"}
+                  Today&apos;s appointments
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {isPatient && (
                     <Link href="/book">
-                      <Button size="sm">Book new appointment</Button>
+                      <Button size="sm">Book an appointment</Button>
                     </Link>
                   )}
                   {!isPatient && (
@@ -324,201 +383,262 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
-
-              {isPatient ? (
-                nextAppointment ? (
-                  <div className="space-y-1 text-sm text-slate-700">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium text-slate-900">
-                        {counterpartLabel(nextAppointment)}
-                      </p>
-                      {statusBadge(nextAppointment)}
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {clinicLocation(nextAppointment)}
-                      {nextAppointment.room?.room_number
-                        ? ` · Room ${nextAppointment.room.room_number}`
-                        : ""}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {slotLabel(nextAppointment)}
-                    </p>
-                    {nextAppointment.notes && (
-                      <p className="mt-1 text-xs text-slate-600">
-                        Notes: {nextAppointment.notes}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <EmptyState
-                    title="No upcoming appointments"
-                    description="Once you book an appointment, it will appear here."
-                  />
-                )
-              ) : todaysAppointments.length === 0 ? (
+              {todaysAppointments.length === 0 ? (
                 <EmptyState
                   title="No appointments today"
-                  description="You have no booked patients for today."
+                  description={
+                    isPatient
+                      ? "Book a new appointment to get started."
+                      : "You have no scheduled visits for today."
+                  }
                 />
               ) : (
-                <ul className="divide-y divide-slate-100">
-                  {todaysAppointments.map((appt) => (
-                    <li
-                      key={appt._id}
-                      className="flex flex-col gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-slate-900">
-                            {counterpartLabel(appt)}
+                <div className="space-y-2">
+                  {todaysAppointments.map((appt) => {
+                    const counterpart =
+                      user.role === "PATIENT" ? appt.doctor : appt.patient;
+                    const canCancel = isPatient && canPatientCancel(appt);
+
+                    return (
+                      <Card
+                        key={appt._id}
+                        className="flex flex-col gap-2 px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusPillClasses(
+                                appt.status
+                              )}`}
+                            >
+                              {appt.status.toLowerCase()}
+                            </span>
+                            <span className="font-medium text-slate-900">
+                              {appt.slot?.time} ·{" "}
+                              {formatDateHuman(appt.slot?.date)}
+                            </span>
+                          </div>
+                          <p className="text-slate-700">
+                            <span className="font-medium">
+                              {counterpartLabel(user.role)}:
+                            </span>{" "}
+                            {counterpart?.full_name ?? "N/A"}
                           </p>
-                          {statusBadge(appt)}
+                          {appt.clinic && (
+                            <p className="text-slate-600">
+                              <span className="font-medium">Clinic:</span>{" "}
+                              {appt.clinic.name}
+                              {appt.clinic.address?.city
+                                ? ` – ${appt.clinic.address.city}`
+                                : ""}
+                            </p>
+                          )}
+                          {appt.room && (
+                            <p className="text-slate-600">
+                              <span className="font-medium">Room:</span>{" "}
+                              {appt.room.room_number}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-xs text-slate-500">
-                          {clinicLocation(appt)}
-                          {appt.room?.room_number
-                            ? ` · Room ${appt.room.room_number}`
-                            : ""}
-                        </p>
-                        {appt.notes && (
-                          <p className="mt-1 text-xs text-slate-600">
-                            Notes: {appt.notes}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-500 sm:text-right">
-                        {slotLabel(appt)}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+
+                        <div className="flex items-center gap-2 self-start sm:self-center">
+                          {isPatient && appt.payment && (
+                            <div className="text-right text-[11px] text-slate-600">
+                              <div className="font-semibold text-slate-800">
+                                {appt.payment.amount} EGP
+                              </div>
+                              <div className="capitalize">
+                                {appt.payment.method.toLowerCase()}
+                              </div>
+                            </div>
+                          )}
+
+                          {canCancel && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCancel(appt._id)}
+                              isLoading={cancelLoadingId === appt._id}
+                            >
+                              Cancel
+                            </Button>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
               )}
-            </Card>
+            </section>
 
-            {/* Upcoming appointments list */}
-            <Card className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Upcoming appointments
-                </h2>
-                <span className="text-xs text-slate-500">
-                  {upcomingAppointments.length} total
-                </span>
-              </div>
-
+            {/* Upcoming */}
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Upcoming appointments
+              </h2>
               {upcomingAppointments.length === 0 ? (
                 <EmptyState
                   title="No upcoming appointments"
                   description={
                     isPatient
-                      ? "Use the book button above to schedule a visit."
-                      : "Your schedule is currently clear."
+                      ? "You don’t have any future bookings yet."
+                      : "No upcoming visits scheduled."
                   }
                 />
               ) : (
-                <ul className="divide-y divide-slate-100">
+                <div className="space-y-2">
                   {upcomingAppointments.map((appt) => {
-                    const canCancel =
-                      isPatient &&
-                      ["BOOKED", "CONFIRMED"].includes(appt.status) &&
-                      isFutureAppointment(appt);
+                    const counterpart =
+                      user.role === "PATIENT" ? appt.doctor : appt.patient;
+                    const canCancel = isPatient && canPatientCancel(appt);
+
                     return (
-                      <li
+                      <Card
                         key={appt._id}
-                        className="flex flex-col gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                        className="flex flex-col gap-2 px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between"
                       >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-slate-900">
-                              {counterpartLabel(appt)}
-                            </p>
-                            {statusBadge(appt)}
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusPillClasses(
+                                appt.status
+                              )}`}
+                            >
+                              {appt.status.toLowerCase()}
+                            </span>
+                            <span className="font-medium text-slate-900">
+                              {appt.slot?.time} ·{" "}
+                              {formatDateHuman(appt.slot?.date)}
+                            </span>
                           </div>
-                          <p className="text-xs text-slate-500">
-                            {clinicLocation(appt)}
-                            {appt.room?.room_number
-                              ? ` · Room ${appt.room.room_number}`
-                              : ""}
+                          <p className="text-slate-700">
+                            <span className="font-medium">
+                              {counterpartLabel(user.role)}:
+                            </span>{" "}
+                            {counterpart?.full_name ?? "N/A"}
                           </p>
-                          {appt.notes && (
-                            <p className="mt-1 text-xs text-slate-600">
-                              Notes: {appt.notes}
+                          {appt.clinic && (
+                            <p className="text-slate-600">
+                              <span className="font-medium">Clinic:</span>{" "}
+                              {appt.clinic.name}
+                              {appt.clinic.address?.city
+                                ? ` – ${appt.clinic.address.city}`
+                                : ""}
                             </p>
                           )}
                         </div>
-                        <div className="flex flex-col items-end gap-1 text-xs text-slate-500">
-                          <span>{slotLabel(appt)}</span>
+
+                        <div className="flex items-center gap-2 self-start sm:self-center">
+                          {isPatient && appt.payment && (
+                            <div className="text-right text-[11px] text-slate-600">
+                              <div className="font-semibold text-slate-800">
+                                {appt.payment.amount} EGP
+                              </div>
+                              <div className="capitalize">
+                                {appt.payment.method.toLowerCase()}
+                              </div>
+                            </div>
+                          )}
+
                           {canCancel && (
                             <Button
-                              size="xs"
+                              size="sm"
                               variant="outline"
                               onClick={() => handleCancel(appt._id)}
                               isLoading={cancelLoadingId === appt._id}
                             >
-                              Cancel appointment
+                              Cancel
                             </Button>
                           )}
                         </div>
-                      </li>
+                      </Card>
                     );
                   })}
-                </ul>
+                </div>
               )}
-            </Card>
+            </section>
 
-            {/* Past appointments */}
-            <Card className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Past appointments
-                </h2>
-                <span className="text-xs text-slate-500">
-                  {pastAppointments.length} total
-                </span>
-              </div>
-
+            {/* Past */}
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Past & completed
+              </h2>
               {pastAppointments.length === 0 ? (
                 <EmptyState
                   title="No past appointments"
-                  description="Your completed visits will appear here over time."
+                  description="Once you complete visits, they will appear here."
                 />
               ) : (
-                <ul className="divide-y divide-slate-100">
-                  {pastAppointments.map((appt) => (
-                    <li
-                      key={appt._id}
-                      className="flex flex-col gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-slate-900">
-                            {counterpartLabel(appt)}
+                <div className="space-y-2">
+                  {pastAppointments.map((appt) => {
+                    const counterpart =
+                      user.role === "PATIENT" ? appt.doctor : appt.patient;
+
+                    return (
+                      <Card
+                        key={appt._id}
+                        className="flex flex-col gap-2 px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusPillClasses(
+                                appt.status
+                              )}`}
+                            >
+                              {appt.status.toLowerCase()}
+                            </span>
+                            <span className="font-medium text-slate-900">
+                              {appt.slot?.time} ·{" "}
+                              {formatDateHuman(appt.slot?.date)}
+                            </span>
+                          </div>
+                          <p className="text-slate-700">
+                            <span className="font-medium">
+                              {counterpartLabel(user.role)}:
+                            </span>{" "}
+                            {counterpart?.full_name ?? "N/A"}
                           </p>
-                          {statusBadge(appt)}
+                          {appt.clinic && (
+                            <p className="text-slate-600">
+                              <span className="font-medium">Clinic:</span>{" "}
+                              {appt.clinic.name}
+                              {appt.clinic.address?.city
+                                ? ` – ${appt.clinic.address.city}`
+                                : ""}
+                            </p>
+                          )}
+                          {appt.notes && (
+                            <p className="text-[11px] text-slate-500">
+                              Notes: {appt.notes}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-xs text-slate-500">
-                          {clinicLocation(appt)}
-                          {appt.room?.room_number
-                            ? ` · Room ${appt.room.room_number}`
-                            : ""}
-                        </p>
-                        {appt.notes && (
-                          <p className="mt-1 text-xs text-slate-600">
-                            Notes: {appt.notes}
-                          </p>
+
+                        {isPatient && appt.payment && (
+                          <div className="text-right text-[11px] text-slate-600">
+                            <div className="font-semibold text-slate-800">
+                              {appt.payment.amount} EGP
+                            </div>
+                            <div className="capitalize">
+                              {appt.payment.method.toLowerCase()}
+                            </div>
+                            <div className="mt-1 text-[10px] text-slate-400">
+                              {new Date(
+                                appt.payment.timestamp
+                              ).toLocaleString()}
+                            </div>
+                          </div>
                         )}
-                      </div>
-                      <div className="text-xs text-slate-500 sm:text-right">
-                        {slotLabel(appt)}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                      </Card>
+                    );
+                  })}
+                </div>
               )}
-            </Card>
+            </section>
           </div>
 
-          {/* Right column: profile summary */}
+          {/* RIGHT: profile summary */}
           <Card className="space-y-4">
             <h2 className="text-sm font-semibold text-slate-900">
               Profile summary
@@ -563,11 +683,11 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="pt-2 border-t border-slate-100 space-y-2 text-xs text-slate-500">
+            <div className="border-t border-slate-100 pt-2 text-xs text-slate-500 space-y-1">
               {isPatient ? (
                 <>
                   <p>
-                    • You can book, view and cancel appointments directly from
+                    • You can book, view, and cancel appointments directly from
                     this dashboard.
                   </p>
                   <p>

@@ -45,6 +45,11 @@ type SlotItem = {
     _id: string;
     name: string;
   };
+  doctor?: {
+    _id: string;
+    full_name: string;
+    specializations?: string[];
+  };
 };
 
 export default function BookPage() {
@@ -96,24 +101,27 @@ export default function BookPage() {
     load();
   }, []);
 
-  async function fetchSlotsFor(
-    doctorId: string,
-    clinicId?: string,
-    dateStr?: string
-  ) {
+  // ✅ generic fetch that works with doctor and/or clinic
+  async function fetchSlots(opts: {
+    doctorId?: string;
+    clinicId?: string;
+    dateStr?: string;
+  }) {
+    const { doctorId, clinicId, dateStr } = opts;
+
     setError(null);
     setSuccess(null);
     setSlots([]);
     setSelectedSlotId(null);
     setSelectedRoomId(null);
 
-    if (!doctorId) {
-      setError("Please select a doctor first.");
+    if (!doctorId && !clinicId) {
+      setError("Please select a doctor or a clinic first.");
       return;
     }
 
     const params = new URLSearchParams();
-    params.set("doctorId", doctorId);
+    if (doctorId) params.set("doctorId", doctorId);
     if (clinicId) params.set("clinicId", clinicId);
     if (dateStr) params.set("date", dateStr);
 
@@ -141,11 +149,11 @@ export default function BookPage() {
 
   async function loadSlots(e?: FormEvent) {
     if (e) e.preventDefault();
-    await fetchSlotsFor(
-      selectedDoctorId,
-      selectedClinicId || undefined,
-      date || undefined
-    );
+    await fetchSlots({
+      doctorId: selectedDoctorId || undefined,
+      clinicId: selectedClinicId || undefined,
+      dateStr: date || undefined
+    });
   }
 
   async function handleBook() {
@@ -157,14 +165,18 @@ export default function BookPage() {
       return;
     }
 
-    if (!selectedDoctorId) {
-      setError("Please select a doctor.");
-      return;
-    }
-
     const slot = slots.find((s) => s._id === selectedSlotId);
     if (!slot) {
       setError("Selected slot is no longer available.");
+      return;
+    }
+
+    // doctor can come from selected state OR from the slot
+    const doctorIdToUse =
+      selectedDoctorId || slot.doctor?._id || "";
+
+    if (!doctorIdToUse) {
+      setError("Unable to detect doctor for this slot.");
       return;
     }
 
@@ -191,7 +203,7 @@ export default function BookPage() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          doctorId: selectedDoctorId,
+          doctorId: doctorIdToUse,
           clinicId: clinicIdToUse,
           roomId: roomIdToUse,
           slotId: selectedSlotId,
@@ -246,13 +258,11 @@ export default function BookPage() {
                 onChange={(e) => {
                   const value = e.target.value;
                   setSelectedClinicId(value);
-                  if (selectedDoctorId) {
-                    fetchSlotsFor(
-                      selectedDoctorId,
-                      value || undefined,
-                      date || undefined
-                    );
-                  }
+                  fetchSlots({
+                    doctorId: selectedDoctorId || undefined,
+                    clinicId: value || undefined,
+                    dateStr: date || undefined
+                  });
                 }}
               >
                 <option value="">Any clinic</option>
@@ -274,18 +284,19 @@ export default function BookPage() {
                 onChange={(e) => {
                   const value = e.target.value;
                   setSelectedDoctorId(value);
-                  setSelectedClinicId("");
-                  setDate("");
-                  setSlots([]);
                   setSelectedSlotId(null);
                   setSelectedRoomId(null);
 
-                  if (value) {
-                    fetchSlotsFor(value);
+                  if (value || selectedClinicId || date) {
+                    fetchSlots({
+                      doctorId: value || undefined,
+                      clinicId: selectedClinicId || undefined,
+                      dateStr: date || undefined
+                    });
                   }
                 }}
               >
-                <option value="">Select a doctor</option>
+                <option value="">Any doctor</option>
                 {doctors.map((d) => (
                   <option key={d._id} value={d._id}>
                     {d.full_name}
@@ -309,12 +320,12 @@ export default function BookPage() {
                   const value = e.target.value;
                   setDate(value);
 
-                  if (selectedDoctorId) {
-                    fetchSlotsFor(
-                      selectedDoctorId,
-                      selectedClinicId || undefined,
-                      value || undefined
-                    );
+                  if (selectedDoctorId || selectedClinicId) {
+                    fetchSlots({
+                      doctorId: selectedDoctorId || undefined,
+                      clinicId: selectedClinicId || undefined,
+                      dateStr: value || undefined
+                    });
                   }
                 }}
               />
@@ -401,6 +412,9 @@ export default function BookPage() {
                         if (slot.clinic?._id) {
                           setSelectedClinicId(slot.clinic._id);
                         }
+                        if (slot.doctor?._id) {
+                          setSelectedDoctorId(slot.doctor._id);
+                        }
                       }}
                       className={`flex flex-col rounded-xl border px-3 py-2 text-left text-xs transition ${
                         selected
@@ -414,6 +428,11 @@ export default function BookPage() {
                       {slot.clinic?.name && (
                         <span className="mt-1 text-[10px] text-slate-500">
                           {slot.clinic.name}
+                        </span>
+                      )}
+                      {slot.doctor?.full_name && (
+                        <span className="mt-1 text-[10px] text-slate-500">
+                          Dr. {slot.doctor.full_name}
                         </span>
                       )}
                       <span className="mt-1 text-[10px] text-slate-500">
@@ -449,7 +468,7 @@ export default function BookPage() {
               {selectedDoctorId
                 ? doctors.find((d) => d._id === selectedDoctorId)?.full_name ??
                   "Selected doctor"
-                : "Not selected"}
+                : selectedSlot?.doctor?.full_name ?? "Any doctor"}
             </p>
             <p>
               <span className="font-medium text-slate-800">
