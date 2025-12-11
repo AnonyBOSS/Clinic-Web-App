@@ -2,6 +2,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/connection";
 import { Slot } from "@/models/Slot";
+// Import referenced models to ensure they're registered before populate()
+import "@/models/Clinic";
+import "@/models/Room";
+import "@/models/Doctor";
 
 function todayDateLocal(): string {
   const now = new Date();
