@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./../styles/globals.css";
 import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import AIChatWidget from "@/components/AIChatWidget";
 import { ReactNode } from "react";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <main className="min-h-screen">
             {children}
           </main>
+          <AIChatWidget />
         </ThemeProvider>
       </body>
     </html>

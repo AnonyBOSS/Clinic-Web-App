@@ -91,12 +91,20 @@ export default function Navbar() {
             Dashboard
           </Link>
           {user?.role !== "DOCTOR" && (
-            <Link
-              href="/book"
-              className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
-            >
-              Book
-            </Link>
+            <>
+              <Link
+                href="/book"
+                className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                Book
+              </Link>
+              <Link
+                href="/symptom-checker"
+                className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                🩺 AI Check
+              </Link>
+            </>
           )}
           {user?.role === "DOCTOR" && (
             <Link

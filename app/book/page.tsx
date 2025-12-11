@@ -2,7 +2,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
@@ -62,6 +62,8 @@ type SlotItem = {
 
 export default function BookPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedDoctorId = searchParams.get("doctorId");
 
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -111,6 +113,16 @@ export default function BookPage() {
         if (doctorsRes.ok) {
           const doctorsJson = await doctorsRes.json();
           setDoctors(doctorsJson.data as Doctor[]);
+
+          // Pre-select doctor if doctorId is in URL (from symptom checker)
+          if (preselectedDoctorId) {
+            const doctorExists = (doctorsJson.data as Doctor[]).some(
+              d => d._id === preselectedDoctorId
+            );
+            if (doctorExists) {
+              setSelectedDoctorId(preselectedDoctorId);
+            }
+          }
         }
       } catch {
         setError("Failed to load clinics/doctors.");
@@ -120,7 +132,7 @@ export default function BookPage() {
     }
 
     load();
-  }, [router]);
+  }, [router, preselectedDoctorId]);
 
   async function fetchSlots(args?: {
     doctorId?: string;
