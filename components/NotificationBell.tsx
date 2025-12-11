@@ -10,6 +10,7 @@ type NotificationItem = {
     read: boolean;
     createdAt: string;
     metadata?: { senderId?: string; senderType?: string };
+    messageCount?: number; // Number of consolidated messages (for NEW_MESSAGE type)
 };
 
 export default function NotificationBell() {
@@ -68,19 +69,42 @@ export default function NotificationBell() {
     }
 
     async function handleNotificationClick(notification: NotificationItem) {
-        // Mark this notification as read
+        // Mark notification(s) as read
         if (!notification.read) {
             try {
-                await fetch("/api/notifications", {
-                    method: "PATCH",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ notificationIds: [notification._id] })
-                });
+                // For NEW_MESSAGE notifications, mark ALL messages from this sender as read
+                if (notification.type === "NEW_MESSAGE") {
+                    // Extract sender name from message
+                    const nameMatch = notification.message.match(/from\s+(.+)$/i);
+                    const senderName = nameMatch ? nameMatch[1].trim() : undefined;
+
+                    await fetch("/api/notifications", {
+                        method: "PATCH",
+                        credentials: "include",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            markSenderMessagesRead: {
+                                senderId: notification.metadata?.senderId,
+                                senderName: senderName
+                            }
+                        })
+                    });
+                } else {
+                    // For other notifications, mark just this one as read
+                    await fetch("/api/notifications", {
+                        method: "PATCH",
+                        credentials: "include",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ notificationIds: [notification._id] })
+                    });
+                }
+
                 setNotifications(prev =>
                     prev.map(n => n._id === notification._id ? { ...n, read: true } : n)
                 );
-                setUnreadCount(prev => Math.max(0, prev - 1));
+                // Decrement by messageCount for consolidated notifications
+                const decrementBy = notification.messageCount || 1;
+                setUnreadCount(prev => Math.max(0, prev - decrementBy));
             } catch {
                 // ignore
             }
@@ -207,7 +231,7 @@ export default function NotificationBell() {
                                 >
                                     {getIcon(n.type)}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-slate-700 dark:text-slate-200 truncate">
+                                        <p className="text-sm text-slate-700 dark:text-slate-200 break-words">
                                             {n.message}
                                         </p>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">

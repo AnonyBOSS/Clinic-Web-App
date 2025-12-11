@@ -125,6 +125,41 @@ export default function DoctorSchedulePage() {
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
 
+      // Validate clinic is selected
+      if (!row.clinicId || row.clinicId === "") {
+        setError(`Row ${i + 1}: Please select a clinic.`);
+        setSaving(false);
+        return;
+      }
+
+      // Validate room is selected
+      if (!row.roomId || row.roomId === "") {
+        setError(`Row ${i + 1}: Please select a room.`);
+        setSaving(false);
+        return;
+      }
+
+      // Validate start time is set
+      if (!row.startTime || row.startTime === "") {
+        setError(`Row ${i + 1}: Start time is required.`);
+        setSaving(false);
+        return;
+      }
+
+      // Validate end time is set
+      if (!row.endTime || row.endTime === "") {
+        setError(`Row ${i + 1}: End time is required.`);
+        setSaving(false);
+        return;
+      }
+
+      // Validate slot duration is set and positive
+      if (!row.slotDurationMinutes || row.slotDurationMinutes <= 0) {
+        setError(`Row ${i + 1}: Slot duration must be a positive number.`);
+        setSaving(false);
+        return;
+      }
+
       // Validate start time is before end time
       if (row.startTime >= row.endTime) {
         setError(`Row ${i + 1}: Start time must be before end time.`);

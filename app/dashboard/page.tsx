@@ -33,6 +33,7 @@ type AppointmentItem = {
     timestamp: string;
   };
   doctor?: {
+    _id: string;
     full_name: string;
     specializations?: string[];
   };
@@ -88,6 +89,30 @@ function canPatientCancel(appt: AppointmentItem): boolean {
   return isFutureAppointment(appt);
 }
 
+function canPatientReschedule(appt: AppointmentItem, todayStr: string): boolean {
+  if (appt.status === "CANCELLED" || appt.status === "COMPLETED") {
+    return false;
+  }
+  // Cannot reschedule if appointment is today
+  if (appt.slot?.date === todayStr) {
+    return false;
+  }
+  return isFutureAppointment(appt);
+}
+
+type AvailableSlot = {
+  _id: string;
+  date: string;
+  time: string;
+  clinic?: {
+    name: string;
+    address?: { city?: string };
+  };
+  room?: {
+    room_number: string;
+  };
+};
+
 function statusPillClasses(status: AppointmentItem["status"]): string {
   switch (status) {
     case "BOOKED":
@@ -112,6 +137,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelLoadingId, setCancelLoadingId] = useState<string | null>(null);
+
+  // Reschedule state
+  const [rescheduleModalAppt, setRescheduleModalAppt] = useState<AppointmentItem | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [selectedNewSlotId, setSelectedNewSlotId] = useState<string | null>(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
 
   useEffect(() => {
 
@@ -235,6 +267,91 @@ export default function DashboardPage() {
       console.error("Cancel request failed", err);
     } finally {
       setCancelLoadingId(null);
+    }
+  }
+
+  async function openRescheduleModal(appt: AppointmentItem) {
+    if (!appt.doctor?._id) {
+      setError("Cannot reschedule: Doctor information missing.");
+      return;
+    }
+
+    setRescheduleModalAppt(appt);
+    setSelectedNewSlotId(null);
+    setLoadingSlots(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/slots/available?doctorId=${appt.doctor._id}`, {
+        credentials: "include"
+      });
+
+      if (!res.ok) {
+        setError("Failed to load available slots.");
+        setLoadingSlots(false);
+        return;
+      }
+
+      const data = await res.json();
+      const slots = (data.data as AvailableSlot[]) ?? [];
+
+      // Filter out today's slots
+      const filtered = slots.filter(s => s.date !== todayStr);
+      setAvailableSlots(filtered);
+    } catch {
+      setError("Network error while loading slots.");
+    } finally {
+      setLoadingSlots(false);
+    }
+  }
+
+  async function handleReschedule() {
+    if (!rescheduleModalAppt || !selectedNewSlotId) return;
+
+    setRescheduling(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/appointments/${rescheduleModalAppt._id}/reschedule`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ newSlotId: selectedNewSlotId })
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setError(data?.error ?? "Failed to reschedule appointment.");
+        setRescheduling(false);
+        return;
+      }
+
+      // Update the appointment in local state
+      const newSlot = availableSlots.find(s => s._id === selectedNewSlotId);
+      if (newSlot) {
+        setAppointments((prev) =>
+          prev.map((a) =>
+            a._id === rescheduleModalAppt._id
+              ? {
+                ...a,
+                slot: { date: newSlot.date, time: newSlot.time },
+                clinic: newSlot.clinic,
+                room: newSlot.room
+              }
+              : a
+          )
+        );
+      }
+
+      // Close modal
+      setRescheduleModalAppt(null);
+      setAvailableSlots([]);
+      setSelectedNewSlotId(null);
+    } catch {
+      setError("Network error while rescheduling.");
+    } finally {
+      setRescheduling(false);
     }
   }
 
@@ -436,6 +553,7 @@ export default function DashboardPage() {
                     const counterpart =
                       user.role === "PATIENT" ? appt.doctor : appt.patient;
                     const canCancel = isPatient && canPatientCancel(appt);
+                    const canReschedule = isPatient && canPatientReschedule(appt, todayStr);
 
                     return (
                       <Card
@@ -483,6 +601,16 @@ export default function DashboardPage() {
                                 {appt.payment.method.toLowerCase()}
                               </div>
                             </div>
+                          )}
+
+                          {canReschedule && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => openRescheduleModal(appt)}
+                            >
+                              Reschedule
+                            </Button>
                           )}
 
                           {canCancel && (
@@ -656,6 +784,89 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Reschedule Modal */}
+      {rescheduleModalAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="max-w-lg w-full mx-4 p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Reschedule Appointment
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Select a new time slot with Dr. {rescheduleModalAppt.doctor?.full_name}.
+              Current appointment: {rescheduleModalAppt.slot?.date} at {rescheduleModalAppt.slot?.time}
+            </p>
+
+            {loadingSlots ? (
+              <div className="py-4">
+                <LoadingSpinner />
+              </div>
+            ) : availableSlots.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 py-4">
+                No available slots found for this doctor. Please try again later.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {availableSlots.map((slot) => (
+                  <label
+                    key={slot._id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedNewSlotId === slot._id
+                        ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                        : "border-slate-200 dark:border-dark-600 hover:bg-slate-50 dark:hover:bg-dark-700"
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="newSlot"
+                      value={slot._id}
+                      checked={selectedNewSlotId === slot._id}
+                      onChange={() => setSelectedNewSlotId(slot._id)}
+                      className="accent-primary-500"
+                    />
+                    <div className="text-sm">
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {formatDateHuman(slot.date)} at {slot.time}
+                      </div>
+                      {slot.clinic && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {slot.clinic.name}
+                          {slot.clinic.address?.city ? ` – ${slot.clinic.address.city}` : ""}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {error && <p className="text-xs text-red-600">{error}</p>}
+
+            <div className="flex gap-3 justify-end pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setRescheduleModalAppt(null);
+                  setAvailableSlots([]);
+                  setSelectedNewSlotId(null);
+                  setError(null);
+                }}
+                disabled={rescheduling}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleReschedule}
+                disabled={!selectedNewSlotId || rescheduling}
+                isLoading={rescheduling}
+              >
+                Confirm Reschedule
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </PageShell>
   );
 }

@@ -4,6 +4,10 @@ import { connectDB } from "@/lib/db/connection";
 import { getAuthUserFromRequest } from "@/lib/auth-request";
 import { Patient } from "@/models/Patient";
 import { Doctor } from "@/models/Doctor";
+import { Appointment } from "@/models/Appointment";
+import { Slot } from "@/models/Slot";
+import { Notification } from "@/models/Notification";
+import { Message } from "@/models/Message";
 import { validateEmail, validatePassword, nonEmptyString } from "@/lib/validators";
 
 type ProfileBody = {
@@ -182,6 +186,93 @@ export async function PUT(req: NextRequest) {
     );
   } catch (error) {
     console.error("[PROFILE_PUT_ERROR]", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    await connectDB();
+    const authUser = getAuthUserFromRequest(req);
+
+    if (!authUser) {
+      return NextResponse.json(
+        { success: false, error: "Not authenticated." },
+        { status: 401 }
+      );
+    }
+
+    const { role, id } = authUser;
+    const isPatient = role === "PATIENT";
+
+    // Find the user to ensure they exist
+    const user = isPatient
+      ? await Patient.findById(id).exec()
+      : await Doctor.findById(id).exec();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "User not found." },
+        { status: 404 }
+      );
+    }
+
+    // 1. Delete appointments and release their slots
+    const appointments = await Appointment.find(
+      isPatient ? { patient: id } : { doctor: id }
+    ).exec();
+
+    for (const appt of appointments) {
+      // Release the slot back to AVAILABLE if not already
+      if (appt.slot) {
+        await Slot.findByIdAndUpdate(appt.slot, { status: "AVAILABLE" }).exec();
+      }
+    }
+
+    await Appointment.deleteMany(
+      isPatient ? { patient: id } : { doctor: id }
+    ).exec();
+
+    // 2. If doctor, delete all their generated slots
+    if (!isPatient) {
+      await Slot.deleteMany({ doctor: id }).exec();
+    }
+
+    // 3. Delete all notifications for this user
+    await Notification.deleteMany({ user: id }).exec();
+
+    // 4. Delete all messages sent or received by this user
+    await Message.deleteMany({
+      $or: [{ sender: id }, { receiver: id }]
+    }).exec();
+
+    // 5. Delete the user record
+    if (isPatient) {
+      await Patient.findByIdAndDelete(id).exec();
+    } else {
+      await Doctor.findByIdAndDelete(id).exec();
+    }
+
+    // 6. Clear auth cookie
+    const response = NextResponse.json(
+      { success: true, message: "Account deleted successfully." },
+      { status: 200 }
+    );
+
+    response.cookies.set("auth_token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0
+    });
+
+    return response;
+  } catch (error) {
+    console.error("[PROFILE_DELETE_ERROR]", error);
     return NextResponse.json(
       { success: false, error: "Internal server error." },
       { status: 500 }

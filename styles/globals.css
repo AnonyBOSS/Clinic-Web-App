@@ -570,3 +570,20 @@ html.dark .stat-card {
     --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
   }
 }
+
+/* ============================
+   TIME/DATE INPUT ICONS
+   ============================ */
+
+/* Make time/date input icons visible in dark mode */
+html.dark input[type="time"]::-webkit-calendar-picker-indicator,
+html.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2);
+  cursor: pointer;
+}
+
+/* For Firefox and other browsers */
+html.dark input[type="time"],
+html.dark input[type="date"] {
+  color-scheme: dark;
+}

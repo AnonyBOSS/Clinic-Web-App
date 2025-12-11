@@ -2,6 +2,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
 import Input from "@/components/Input";
@@ -38,6 +39,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Delete account state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     async function load() {
@@ -123,6 +130,32 @@ export default function ProfilePage() {
       setError("Network error while updating profile.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/profile", {
+        method: "DELETE",
+        credentials: "include"
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setError(data?.error ?? "Failed to delete account.");
+        setDeleting(false);
+        return;
+      }
+
+      // Success - redirect to home
+      router.push("/");
+    } catch {
+      setError("Network error while deleting account.");
+      setDeleting(false);
     }
   }
 
@@ -295,8 +328,82 @@ export default function ProfilePage() {
             <li>• Doctors should keep their specializations accurate.</li>
             <li>• Use a strong password and don&apos;t share it.</li>
           </ul>
+
+          {/* Delete Account Section */}
+          <div className="pt-4 border-t border-slate-200 dark:border-dark-700">
+            <h3 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-2">
+              Danger Zone
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+              Permanently delete your account and all associated data including
+              appointments, messages, and notifications.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Account
+            </Button>
+          </div>
         </Card>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="max-w-md w-full mx-4 p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-red-600 dark:text-red-400">
+              Delete Account?
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              This action cannot be undone. This will permanently delete your
+              account and remove all data including:
+            </p>
+            <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1 pl-4">
+              <li>• All your appointments (past and future)</li>
+              <li>• All your messages and conversations</li>
+              <li>• All your notifications</li>
+              {isDoctor && <li>• All your generated time slots</li>}
+            </ul>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                Type <span className="font-bold">DELETE</span> to confirm:
+              </label>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE"
+              />
+            </div>
+            {error && <p className="text-xs text-red-600">{error}</p>}
+            <div className="flex gap-3 justify-end pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                  setError(null);
+                }}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== "DELETE" || deleting}
+                isLoading={deleting}
+              >
+                Delete Forever
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </PageShell>
   );
 }
