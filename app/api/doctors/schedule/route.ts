@@ -8,6 +8,7 @@ import { Clinic } from "@/models/Clinic";
 import { Room } from "@/models/Room";
 import { Appointment } from "@/models/Appointment";
 import { Slot } from "@/models/Slot";
+import { Notification } from "@/models/Notification";
 
 type ScheduleDayDTO = {
   dayOfWeek: number;
@@ -104,9 +105,9 @@ export async function PUT(req: NextRequest) {
 
     const body = (await req.json().catch(() => null)) as
       | {
-          scheduleDays?: ScheduleDayDTO[];
-          consultationFee?: number;
-        }
+        scheduleDays?: ScheduleDayDTO[];
+        consultationFee?: number;
+      }
       | null;
 
     const scheduleDays = body?.scheduleDays ?? [];
@@ -281,10 +282,18 @@ export async function PUT(req: NextRequest) {
 
           if (!stillValidForAppt) {
             appt.status = "CANCELLED";
-            appt.notes = `${
-              appt.notes ? appt.notes + " " : ""
-            }[Auto-cancelled due to schedule update]`;
+            appt.notes = `${appt.notes ? appt.notes + " " : ""
+              }[Auto-cancelled due to schedule update]`;
             await appt.save();
+
+            // Create notification for the patient
+            await Notification.create({
+              user: appt.patient,
+              userType: "PATIENT",
+              type: "AUTO_CANCEL",
+              message: `Your appointment with Dr. ${doctor.full_name} was cancelled due to a schedule change.`,
+              appointment: appt._id
+            });
           }
         }
 

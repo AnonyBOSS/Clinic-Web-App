@@ -113,16 +113,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [cancelLoadingId, setCancelLoadingId] = useState<string | null>(null);
 
-  // Banner hide state (per tab)
-  const [hideAutoCancelBanner, setHideAutoCancelBanner] = useState(false);
-
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const seen = window.sessionStorage.getItem("autoCancelBannerSeen");
-      if (seen === "true") {
-        setHideAutoCancelBanner(true);
-      }
-    }
 
     async function load() {
       try {
@@ -208,17 +199,6 @@ export default function DashboardPage() {
     [appointments, todayStr]
   );
 
-  const autoCancelledUpcoming = useMemo(
-    () =>
-      appointments.filter(
-        (a) =>
-          a.status === "CANCELLED" &&
-          a.notes?.includes("[Auto-cancelled due to schedule update]") &&
-          isFutureAppointment(a)
-      ),
-    [appointments]
-  );
-
   async function handleCancel(appointmentId: string) {
     setCancelLoadingId(appointmentId);
     try {
@@ -289,41 +269,6 @@ export default function DashboardPage() {
       description={`You are signed in as ${roleLabel.toLowerCase()}.`}
     >
       <div className="space-y-4">
-        {/* Auto-cancel banner for patients, dismissible per tab */}
-        {isPatient &&
-          autoCancelledUpcoming.length > 0 &&
-          !hideAutoCancelBanner && (
-            <Card className="border border-amber-200 dark:border-amber-700/50 bg-amber-50/80 dark:bg-amber-900/30 px-4 py-3 text-xs text-amber-900 dark:text-amber-100">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="mb-1 font-semibold">
-                    Some of your appointments were cancelled.
-                  </p>
-                  <p className="dark:text-amber-200">
-                    One or more of your upcoming appointments was automatically
-                    cancelled because the doctor changed their schedule. Please
-                    book a new suitable time.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100"
-                  onClick={() => {
-                    setHideAutoCancelBanner(true);
-                    if (typeof window !== "undefined") {
-                      window.sessionStorage.setItem(
-                        "autoCancelBannerSeen",
-                        "true"
-                      );
-                    }
-                  }}
-                >
-                  Dismiss
-                </button>
-              </div>
-            </Card>
-          )}
-
         {error && (
           <Card className="border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/30 px-4 py-2 text-xs text-red-700 dark:text-red-200">
             {error}

@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Button from "./Button";
 import ThemeToggle from "./ThemeToggle";
+import NotificationBell from "./NotificationBell";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -105,10 +106,19 @@ export default function Navbar() {
               Schedule
             </Link>
           )}
+          {user && (
+            <Link
+              href="/messages"
+              className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+            >
+              Messages
+            </Link>
+          )}
         </nav>
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          {user && <NotificationBell />}
           <ThemeToggle />
 
           {loading ? (
