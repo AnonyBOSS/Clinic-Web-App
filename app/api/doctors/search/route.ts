@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/connection';
-import Doctor from '@/models/Doctor';
+import { Doctor } from '@/models/Doctor';
+// Import referenced models for populate()
+import '@/models/Clinic';
 
 export async function GET(req: NextRequest) {
   try {

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/connection';
-import Doctor from '@/models/Doctor';
-import Appointment from '@/models/Appointment';
-import Patient from '@/models/Patient';
-import Clinic from '@/models/Clinic';
-import Room from '@/models/Room';
+import { Doctor } from '@/models/Doctor';
+import { Appointment } from '@/models/Appointment';
+import { Patient } from '@/models/Patient';
+import { Clinic } from '@/models/Clinic';
+import { Room } from '@/models/Room';
 
 export async function GET(
   req: NextRequest,

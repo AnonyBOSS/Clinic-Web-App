@@ -7,6 +7,9 @@ import { Appointment } from "@/models/Appointment";
 import { Payment } from "@/models/Payment";
 import { Doctor } from "@/models/Doctor";
 import { Room } from "@/models/Room";
+// Import referenced models for populate()
+import "@/models/Clinic";
+import "@/models/Patient";
 
 function todayDateLocal(): string {
   const now = new Date();

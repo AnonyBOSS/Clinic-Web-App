@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/connection';
-import Appointment from '@/models/Appointment';
-import Slot from '@/models/Slot';
-import Payment from '@/models/Payment';
+import { Appointment } from '@/models/Appointment';
+import { Slot } from '@/models/Slot';
+import { Payment } from '@/models/Payment';
 import { getAuthUserFromRequest } from '@/lib/auth-request';
+// Import referenced models for populate()
+import '@/models/Doctor';
+import '@/models/Clinic';
+import '@/models/Room';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +22,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (authUser.role !== 'patient') {
+    if (authUser.role !== 'PATIENT') {
       return NextResponse.json(
         { success: false, error: 'Only patients can book appointments' },
         { status: 403 }
@@ -113,7 +117,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (authUser.role !== 'patient') {
+    if (authUser.role !== 'PATIENT') {
       return NextResponse.json(
         { success: false, error: 'Only patients can view their appointments' },
         { status: 403 }

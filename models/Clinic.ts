@@ -23,5 +23,8 @@ const ClinicSchema = new Schema<IClinic>({
   operating_hours: String,
 });
 
+// Unique constraint on clinic name
+ClinicSchema.index({ name: 1 }, { unique: true });
+
 export const Clinic: Model<IClinic> =
   mongoose.models.Clinic || mongoose.model<IClinic>("Clinic", ClinicSchema);

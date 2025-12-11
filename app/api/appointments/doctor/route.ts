@@ -2,7 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUserFromRequest } from '@/lib/auth-request';
 import { connectDB } from '@/lib/db/connection';
-import Appointment from '@/models/Appointment';
+import { Appointment } from '@/models/Appointment';
+// Import referenced models for populate()
+import '@/models/Patient';
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,7 +17,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (authUser.role !== 'doctor') {
+    if (authUser.role !== 'DOCTOR') {
       return NextResponse.json(
         { success: false, message: 'Forbidden' },
         { status: 403 }

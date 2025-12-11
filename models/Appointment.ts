@@ -61,6 +61,11 @@ const AppointmentSchema = new Schema<IAppointment>(
   { timestamps: true }
 );
 
+// Indexes for common query patterns
+AppointmentSchema.index({ patient: 1, status: 1 }); // Patient appointments by status
+AppointmentSchema.index({ doctor: 1, status: 1 });  // Doctor appointments by status
+AppointmentSchema.index({ slot: 1 }, { unique: true }); // One appointment per slot
+
 export const Appointment: Model<IAppointment> =
   mongoose.models.Appointment ||
   mongoose.model<IAppointment>("Appointment", AppointmentSchema);
