@@ -46,6 +46,20 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
+  // Ratings state (for patients)
+  type RatingItem = {
+    _id: string;
+    rating: number;
+    review?: string;
+    createdAt: string;
+    doctor?: { _id: string; full_name: string; specializations?: string[] };
+  };
+  const [myRatings, setMyRatings] = useState<RatingItem[]>([]);
+  const [loadingRatings, setLoadingRatings] = useState(false);
+  const [editingRatingId, setEditingRatingId] = useState<string | null>(null);
+  const [editRatingValue, setEditRatingValue] = useState(0);
+  const [editReviewValue, setEditReviewValue] = useState("");
+
   useEffect(() => {
     async function load() {
       try {
@@ -74,6 +88,67 @@ export default function ProfilePage() {
 
     load();
   }, []);
+
+  // Fetch patient's ratings
+  async function fetchMyRatings() {
+    if (!user || user.role !== "PATIENT") return;
+    setLoadingRatings(true);
+    try {
+      const res = await fetch("/api/ratings?myRatings=true", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setMyRatings(data.data || []);
+      }
+    } catch {
+      console.error("Failed to fetch ratings");
+    } finally {
+      setLoadingRatings(false);
+    }
+  }
+
+  // Fetch ratings when user loads
+  useEffect(() => {
+    if (user?.role === "PATIENT") {
+      fetchMyRatings();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  async function handleUpdateRating(ratingId: string) {
+    try {
+      const res = await fetch("/api/ratings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ratingId,
+          rating: editRatingValue,
+          review: editReviewValue
+        })
+      });
+      if (res.ok) {
+        setEditingRatingId(null);
+        fetchMyRatings();
+      }
+    } catch {
+      console.error("Failed to update rating");
+    }
+  }
+
+  async function handleDeleteRating(ratingId: string) {
+    if (!confirm("Are you sure you want to delete this rating?")) return;
+    try {
+      const res = await fetch(`/api/ratings?ratingId=${ratingId}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (res.ok) {
+        setMyRatings(prev => prev.filter(r => r._id !== ratingId));
+      }
+    } catch {
+      console.error("Failed to delete rating");
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -349,6 +424,141 @@ export default function ProfilePage() {
           </div>
         </Card>
       </div>
+
+      {/* My Ratings Section - Only for Patients */}
+      {!isDoctor && (
+        <Card className="mt-6" variant="glass">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+              My Ratings
+            </h2>
+            {myRatings.length > 0 && (
+              <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+                {myRatings.length} rating{myRatings.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          {loadingRatings ? (
+            <LoadingSpinner />
+          ) : myRatings.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-3">⭐</div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                You haven&apos;t rated any doctors yet.
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                Complete an appointment to leave a review!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {myRatings.map((rating) => (
+                <div
+                  key={rating._id}
+                  className="p-4 rounded-xl border border-slate-200 dark:border-dark-600 bg-white dark:bg-dark-800/50 hover:shadow-sm transition-shadow"
+                >
+                  {editingRatingId === rating._id ? (
+                    // Edit mode
+                    <div className="space-y-4">
+                      <div className="flex justify-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setEditRatingValue(star)}
+                            className="text-3xl transition-transform hover:scale-110"
+                          >
+                            {editRatingValue >= star ? (
+                              <span className="text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]">★</span>
+                            ) : (
+                              <span className="text-slate-300 dark:text-slate-600">★</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      <Input
+                        value={editReviewValue}
+                        onChange={(e) => setEditReviewValue(e.target.value)}
+                        placeholder="Your review (optional)"
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingRatingId(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button size="sm" onClick={() => handleUpdateRating(rating._id)}>
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    // View mode
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white font-medium text-sm">
+                            {rating.doctor?.full_name?.charAt(0) || "D"}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm text-slate-900 dark:text-white truncate">
+                              Dr. {rating.doctor?.full_name || "Unknown"}
+                            </p>
+                            {rating.doctor?.specializations && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                {rating.doctor.specializations.join(", ")}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-amber-400">
+                            {"★".repeat(rating.rating)}
+                            <span className="text-slate-300 dark:text-slate-600">
+                              {"★".repeat(5 - rating.rating)}
+                            </span>
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {new Date(rating.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {rating.review && (
+                          <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-dark-700/50 rounded-lg px-3 py-2 italic">
+                            &quot;{rating.review}&quot;
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingRatingId(rating._id);
+                            setEditRatingValue(rating.rating);
+                            setEditReviewValue(rating.review || "");
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="destructive"
+                          onClick={() => handleDeleteRating(rating._id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (

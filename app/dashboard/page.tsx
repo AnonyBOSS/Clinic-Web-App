@@ -9,6 +9,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
+import RatingModal from "@/components/RatingModal";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -145,6 +146,10 @@ export default function DashboardPage() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
 
+  // Rating state
+  const [ratingModalAppt, setRatingModalAppt] = useState<AppointmentItem | null>(null);
+  const [ratedAppointments, setRatedAppointments] = useState<Set<string>>(new Set());
+
   useEffect(() => {
 
     async function load() {
@@ -180,6 +185,25 @@ export default function DashboardPage() {
           });
 
           setAppointments(sorted);
+
+          // Fetch existing ratings to mark already-rated appointments
+          if (me.role === "PATIENT") {
+            try {
+              const ratingsRes = await fetch("/api/ratings?myRatings=true", {
+                credentials: "include"
+              });
+              if (ratingsRes.ok) {
+                const ratingsJson = await ratingsRes.json();
+                const ratings = ratingsJson.data || [];
+                const ratedIds = new Set<string>(
+                  ratings.map((r: any) => r.appointment?._id || r.appointment).filter(Boolean)
+                );
+                setRatedAppointments(ratedIds);
+              }
+            } catch {
+              // Ignore ratings fetch error
+            }
+          }
         } else {
           setAppointments([]);
         }
@@ -688,21 +712,43 @@ export default function DashboardPage() {
                           )}
                         </div>
 
-                        {isPatient && appt.payment && (
-                          <div className="text-right text-[11px] text-slate-600 dark:text-slate-400">
-                            <div className="font-semibold text-slate-800 dark:text-slate-200">
-                              {appt.payment.amount} EGP
+                        <div className="flex items-center gap-2">
+                          {isPatient && appt.payment && (
+                            <div className="text-right text-[11px] text-slate-600 dark:text-slate-400">
+                              <div className="font-semibold text-slate-800 dark:text-slate-200">
+                                {appt.payment.amount} EGP
+                              </div>
+                              <div className="capitalize">
+                                {appt.payment.method.toLowerCase()}
+                              </div>
+                              <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                {new Date(
+                                  appt.payment.timestamp
+                                ).toLocaleString()}
+                              </div>
                             </div>
-                            <div className="capitalize">
-                              {appt.payment.method.toLowerCase()}
-                            </div>
-                            <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-                              {new Date(
-                                appt.payment.timestamp
-                              ).toLocaleString()}
-                            </div>
-                          </div>
-                        )}
+                          )}
+
+                          {/* Rate button for completed appointments */}
+                          {isPatient && appt.status === "COMPLETED" && appt.doctor && !ratedAppointments.has(appt._id) && (
+                            <Button
+                              size="sm"
+                              variant="gradient"
+                              onClick={() => setRatingModalAppt(appt)}
+                              className="shadow-md"
+                            >
+                              ⭐ Rate
+                            </Button>
+                          )}
+                          {ratedAppointments.has(appt._id) && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              Rated
+                            </span>
+                          )}
+                        </div>
                       </Card>
                     );
                   })}
@@ -811,8 +857,8 @@ export default function DashboardPage() {
                   <label
                     key={slot._id}
                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedNewSlotId === slot._id
-                        ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                        : "border-slate-200 dark:border-dark-600 hover:bg-slate-50 dark:hover:bg-dark-700"
+                      ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                      : "border-slate-200 dark:border-dark-600 hover:bg-slate-50 dark:hover:bg-dark-700"
                       }`}
                   >
                     <input
@@ -867,6 +913,19 @@ export default function DashboardPage() {
           </Card>
         </div>
       )}
+
+      {/* Rating Modal */}
+      <RatingModal
+        isOpen={!!ratingModalAppt}
+        onClose={() => setRatingModalAppt(null)}
+        doctorName={ratingModalAppt?.doctor?.full_name || ""}
+        appointmentId={ratingModalAppt?._id || ""}
+        onSuccess={() => {
+          if (ratingModalAppt) {
+            setRatedAppointments(prev => new Set([...prev, ratingModalAppt._id]));
+          }
+        }}
+      />
     </PageShell>
   );
 }
