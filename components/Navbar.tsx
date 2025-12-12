@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import Button from "./Button";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useTranslation } from "@/lib/i18n";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -22,6 +24,7 @@ type CurrentUser =
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [user, setUser] = useState<CurrentUser>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -88,7 +91,7 @@ export default function Navbar() {
             href="/dashboard"
             className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
           >
-            Dashboard
+            {t.nav.dashboard}
           </Link>
           {user?.role !== "DOCTOR" && (
             <>
@@ -96,13 +99,13 @@ export default function Navbar() {
                 href="/book"
                 className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
               >
-                Book
+                {t.nav.booking}
               </Link>
               <Link
                 href="/symptom-checker"
                 className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
               >
-                AI Check
+                {t.nav.aiCheck}
               </Link>
             </>
           )}
@@ -112,13 +115,13 @@ export default function Navbar() {
                 href="/doctor/schedule"
                 className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
               >
-                Schedule
+                {t.nav.schedule}
               </Link>
               <Link
                 href="/doctor/analytics"
                 className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
               >
-                Analytics
+                {t.nav.analytics}
               </Link>
             </>
           )}
@@ -127,7 +130,7 @@ export default function Navbar() {
               href="/messages"
               className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
             >
-              Messages
+              {t.nav.messages}
             </Link>
           )}
         </nav>
@@ -135,6 +138,7 @@ export default function Navbar() {
         {/* Right side */}
         <div className="flex items-center gap-2">
           {user && <NotificationBell />}
+          <LanguageSwitcher />
           <ThemeToggle />
 
           {loading ? (
@@ -151,18 +155,18 @@ export default function Navbar() {
                 <span className="hidden lg:inline">{user.full_name}</span>
               </Link>
               <Button size="sm" variant="outline" onClick={handleLogout}>
-                Logout
+                {t.nav.logout}
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">
                 <Button variant="ghost" size="sm">
-                  Login
+                  {t.nav.login}
                 </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm" variant="gradient">Sign up</Button>
+                <Button size="sm" variant="gradient">{t.nav.register}</Button>
               </Link>
             </div>
           )}
@@ -192,7 +196,7 @@ export default function Navbar() {
               className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Dashboard
+              {t.nav.dashboard}
             </Link>
             {user?.role !== "DOCTOR" && (
               <Link
@@ -200,7 +204,7 @@ export default function Navbar() {
                 className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Book Appointment
+                {t.appointments.book}
               </Link>
             )}
             {user?.role === "DOCTOR" && (
@@ -209,7 +213,7 @@ export default function Navbar() {
                 className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Manage Schedule
+                {t.nav.schedule}
               </Link>
             )}
             {user && (
@@ -218,7 +222,7 @@ export default function Navbar() {
                 className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Profile
+                {t.nav.profile}
               </Link>
             )}
           </nav>

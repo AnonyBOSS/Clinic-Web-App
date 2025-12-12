@@ -6,8 +6,10 @@ import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ContactPage() {
+    const { t } = useTranslation();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [subject, setSubject] = useState("");
@@ -22,8 +24,8 @@ export default function ContactPage() {
 
     return (
         <PageShell
-            title="Contact Us"
-            description="We'd love to hear from you. Get in touch with our team."
+            title={t.contact.title}
+            description={t.contact.description}
         >
             <div className="max-w-4xl mx-auto grid gap-8 lg:grid-cols-2">
                 {/* Contact Form */}
@@ -35,9 +37,9 @@ export default function ContactPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Message Sent!</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{t.contact.messageSent}</h3>
                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                                Thank you for reaching out. We&apos;ll get back to you within 24 hours.
+                                {t.contact.thankYou}
                             </p>
                             <Button
                                 className="mt-4"
@@ -45,25 +47,25 @@ export default function ContactPage() {
                                 size="sm"
                                 onClick={() => setSubmitted(false)}
                             >
-                                Send another message
+                                {t.contact.sendAnother}
                             </Button>
                         </div>
                     ) : (
                         <>
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Send us a message</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.contact.sendMessage}</h2>
                             <form className="space-y-4" onSubmit={handleSubmit}>
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Name</label>
+                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">{t.contact.name}</label>
                                         <Input
                                             required
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
-                                            placeholder="Your name"
+                                            placeholder={t.contact.yourName}
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Email</label>
+                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">{t.contact.email}</label>
                                         <Input
                                             type="email"
                                             required
@@ -74,27 +76,27 @@ export default function ContactPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Subject</label>
+                                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">{t.contact.subject}</label>
                                     <Input
                                         required
                                         value={subject}
                                         onChange={(e) => setSubject(e.target.value)}
-                                        placeholder="How can we help?"
+                                        placeholder={t.contact.howCanWeHelp}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Message</label>
+                                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">{t.contact.message}</label>
                                     <textarea
                                         required
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
-                                        placeholder="Tell us more about your inquiry..."
+                                        placeholder={t.contact.tellUsMore}
                                         rows={5}
                                         className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                                     />
                                 </div>
                                 <Button type="submit" className="w-full">
-                                    Send Message
+                                    {t.contact.sendMessageBtn}
                                 </Button>
                             </form>
                         </>
@@ -104,7 +106,7 @@ export default function ContactPage() {
                 {/* Contact Info */}
                 <div className="space-y-6">
                     <Card className="space-y-4">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Contact Information</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.contact.contactInfo}</h3>
                         <div className="space-y-4 text-sm">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
@@ -113,7 +115,7 @@ export default function ContactPage() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-900 dark:text-white">Email</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">{t.contact.email}</p>
                                     <a href="mailto:support@clinify.com" className="text-indigo-600 dark:text-indigo-400 hover:underline">
                                         support@clinify.com
                                     </a>
@@ -126,7 +128,7 @@ export default function ContactPage() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-900 dark:text-white">Phone</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">{t.contact.phone}</p>
                                     <a href="tel:+201234567890" className="text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400">
                                         +20 123 456 7890
                                     </a>
@@ -140,10 +142,10 @@ export default function ContactPage() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-900 dark:text-white">Address</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">{t.contact.address}</p>
                                     <p className="text-slate-600 dark:text-slate-300">
-                                        123 Healthcare Avenue<br />
-                                        Cairo, Egypt
+                                        {t.contact.addressLine1}<br />
+                                        {t.contact.addressLine2}
                                     </p>
                                 </div>
                             </div>
@@ -151,19 +153,19 @@ export default function ContactPage() {
                     </Card>
 
                     <Card className="space-y-4">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Business Hours</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.contact.businessHours}</h3>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-slate-600 dark:text-slate-300">Monday - Friday</span>
+                                <span className="text-slate-600 dark:text-slate-300">{t.dateTime.mondayFriday}</span>
                                 <span className="font-medium text-slate-900 dark:text-white">9:00 AM - 6:00 PM</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-600 dark:text-slate-300">Saturday</span>
+                                <span className="text-slate-600 dark:text-slate-300">{t.dateTime.saturday}</span>
                                 <span className="font-medium text-slate-900 dark:text-white">10:00 AM - 4:00 PM</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-600 dark:text-slate-300">Sunday</span>
-                                <span className="font-medium text-slate-900 dark:text-white">Closed</span>
+                                <span className="text-slate-600 dark:text-slate-300">{t.dateTime.sunday}</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{t.dateTime.closed}</span>
                             </div>
                         </div>
                     </Card>

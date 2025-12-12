@@ -7,11 +7,13 @@ import PageShell from "@/components/PageShell";
 import Input from "@/components/Input";
 import Select from "@/components/Select";
 import Button from "@/components/Button";
+import { useTranslation } from "@/lib/i18n";
 
 type Role = "PATIENT" | "DOCTOR";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [role, setRole] = useState<Role>("PATIENT");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -49,13 +51,12 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
+        setError(data.error ?? t.errors.somethingWentWrong);
       } else {
-        // logged in via cookie + token, go to dashboard
         router.push("/dashboard");
       }
     } catch {
-      setError("Network error.");
+      setError(t.errors.somethingWentWrong);
     } finally {
       setLoading(false);
     }
@@ -63,48 +64,48 @@ export default function RegisterPage() {
 
   return (
     <PageShell
-      title="Create an account"
-      description="Sign up as a patient or a doctor."
+      title={t.auth.signUp}
+      description={`${t.auth.asPatient} ${t.common.or} ${t.auth.asDoctor}`}
     >
       <div className="mx-auto max-w-md rounded-2xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 p-6 shadow-sm">
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Role */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Role
+              {t.auth.asPatient} / {t.auth.asDoctor}
             </label>
             <Select
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
             >
-              <option value="PATIENT">Patient</option>
-              <option value="DOCTOR">Doctor</option>
+              <option value="PATIENT">{t.auth.asPatient}</option>
+              <option value="DOCTOR">{t.auth.asDoctor}</option>
             </Select>
           </div>
 
           {/* Full name */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Full name
+              {t.auth.fullName}
             </label>
             <Input
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Ahmed Hossam"
+              placeholder={t.auth.namePlaceholder}
             />
           </div>
 
           {/* Phone */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Phone
+              {t.auth.phone}
             </label>
             <Input
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+20..."
+              placeholder={t.auth.phonePlaceholder}
             />
           </div>
 
@@ -113,23 +114,23 @@ export default function RegisterPage() {
             <>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Specialization
+                  {t.doctors.specialization}
                 </label>
                 <Input
                   value={specialization}
                   onChange={(e) => setSpecialization(e.target.value)}
-                  placeholder="Cardiology, Pediatrics..."
+                  placeholder={t.auth.specializationPlaceholder}
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Qualifications
+                  {t.doctors.qualifications}
                 </label>
                 <Input
                   value={qualifications}
                   onChange={(e) => setQualifications(e.target.value)}
-                  placeholder="M.D., MSc, etc."
+                  placeholder={t.auth.qualificationsPlaceholder}
                 />
               </div>
             </>
@@ -138,7 +139,7 @@ export default function RegisterPage() {
           {/* Email */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Email
+              {t.auth.email}
             </label>
             <Input
               type="email"
@@ -146,14 +147,14 @@ export default function RegisterPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t.auth.emailPlaceholder}
             />
           </div>
 
           {/* Password */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Password
+              {t.auth.password}
             </label>
             <Input
               type="password"
@@ -162,7 +163,7 @@ export default function RegisterPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder={t.auth.passwordPlaceholder}
             />
           </div>
 
@@ -177,7 +178,7 @@ export default function RegisterPage() {
             className="w-full"
             isLoading={loading}
           >
-            Create account
+            {t.auth.signUp}
           </Button>
         </form>
       </div>

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 interface Message {
     role: "user" | "assistant";
@@ -9,6 +10,7 @@ interface Message {
 }
 
 export default function AIChatWidget() {
+    const { t, language } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
@@ -33,7 +35,8 @@ export default function AIChatWidget() {
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({
-                    messages: [...messages, { role: "user", content: userMessage }]
+                    messages: [...messages, { role: "user", content: userMessage }],
+                    language
                 })
             });
 
@@ -44,13 +47,13 @@ export default function AIChatWidget() {
             } else {
                 setMessages(prev => [...prev, {
                     role: "assistant",
-                    content: data.error || "Sorry, I couldn't process your request."
+                    content: data.error || t.errors.somethingWentWrong
                 }]);
             }
         } catch {
             setMessages(prev => [...prev, {
                 role: "assistant",
-                content: "Sorry, something went wrong. Please try again."
+                content: t.errors.networkError
             }]);
         } finally {
             setLoading(false);
@@ -65,7 +68,12 @@ export default function AIChatWidget() {
     }
 
     // Quick action buttons
-    const quickActions = [
+    const quickActions = language === "ar" ? [
+        "ما هي ساعات العمل؟",
+        "كيف أستعد لموعدي؟",
+        "كيف أعيد جدولة موعدي؟",
+        "معلومات الاتصال"
+    ] : [
         "What are the clinic hours?",
         "How do I prepare for my appointment?",
         "How do I reschedule?",
@@ -78,7 +86,7 @@ export default function AIChatWidget() {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
-                aria-label="AI Assistant"
+                aria-label={t.ai.clinicAssistant}
             >
                 {isOpen ? (
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,8 +108,8 @@ export default function AIChatWidget() {
                             <span className="text-xl">🤖</span>
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-white">Clinic Assistant</h3>
-                            <p className="text-xs text-white/80">Powered by AI</p>
+                            <h3 className="font-semibold text-white">{t.ai.clinicAssistant}</h3>
+                            <p className="text-xs text-white/80">{t.ai.poweredByAI}</p>
                         </div>
                         <button
                             onClick={() => setIsOpen(false)}
@@ -118,7 +126,7 @@ export default function AIChatWidget() {
                         {messages.length === 0 ? (
                             <div className="text-center py-4">
                                 <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
-                                    👋 Hi! How can I help you today?
+                                    👋 {t.ai.howCanIHelp}
                                 </p>
                                 <div className="space-y-2">
                                     {quickActions.map((action, i) => (
@@ -144,8 +152,8 @@ export default function AIChatWidget() {
                                 >
                                     <div
                                         className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm ${msg.role === "user"
-                                                ? "bg-indigo-600 text-white rounded-br-none"
-                                                : "bg-slate-100 dark:bg-dark-700 text-slate-700 dark:text-slate-200 rounded-bl-none"
+                                            ? "bg-indigo-600 text-white rounded-br-none"
+                                            : "bg-slate-100 dark:bg-dark-700 text-slate-700 dark:text-slate-200 rounded-bl-none"
                                             }`}
                                     >
                                         {msg.content}
@@ -175,7 +183,7 @@ export default function AIChatWidget() {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder="Type your message..."
+                                placeholder={t.messages.typeMessage}
                                 className="flex-1 px-4 py-2 rounded-full border border-slate-300 dark:border-dark-600 bg-white dark:bg-dark-700 text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500"
                                 disabled={loading}
                             />

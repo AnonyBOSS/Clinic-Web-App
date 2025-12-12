@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json().catch(() => null);
-        const { symptoms, age, gender } = body || {};
+        const { symptoms, age, gender, language = "en" } = body || {};
 
         if (!symptoms || typeof symptoms !== "string" || symptoms.trim().length < 10) {
             return NextResponse.json(
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Analyze symptoms with AI
-        const aiAnalysis = await analyzeSymptoms(symptoms, age, gender);
+        // Analyze symptoms with AI (pass language for localized responses)
+        const aiAnalysis = await analyzeSymptoms(symptoms, age, gender, language);
 
         // Find matching doctors based on suggested specialties
         const matchingDoctors = await Doctor.find({

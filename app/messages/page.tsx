@@ -8,6 +8,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
+import { useTranslation } from "@/lib/i18n";
 
 type Conversation = {
     userId: string;
@@ -44,6 +45,7 @@ type ContactOption = {
 export default function MessagesPage() {
     const searchParams = useSearchParams();
     const chatWithId = searchParams.get("chat");
+    const { t } = useTranslation();
 
     const [user, setUser] = useState<CurrentUser | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -226,13 +228,13 @@ export default function MessagesPage() {
     function formatDate(dateStr: string) {
         const d = new Date(dateStr);
         const today = new Date();
-        if (d.toDateString() === today.toDateString()) return "Today";
+        if (d.toDateString() === today.toDateString()) return t.dateTime.today;
         return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
 
     if (loading) {
         return (
-            <PageShell title="Messages">
+            <PageShell title={t.messages.title}>
                 <LoadingSpinner />
             </PageShell>
         );
@@ -240,26 +242,26 @@ export default function MessagesPage() {
 
     if (!user) {
         return (
-            <PageShell title="Messages" description="Please log in to view your messages.">
-                <EmptyState title="Not logged in" description="Sign in to access your messages." />
+            <PageShell title={t.messages.title} description={t.errors.unauthorized}>
+                <EmptyState title={t.errors.unauthorized} description={t.nav.login} />
             </PageShell>
         );
     }
 
     return (
-        <PageShell title="Messages" description="Chat with your doctors or patients.">
+        <PageShell title={t.messages.title} description={t.messages.conversations}>
             <div className="grid gap-4 lg:grid-cols-3 h-[calc(100vh-220px)] min-h-[500px]">
                 {/* Conversations list */}
                 <Card className="lg:col-span-1 p-0 overflow-hidden flex flex-col">
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-dark-600 flex items-center justify-between">
                         <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                            Conversations
+                            {t.messages.conversations}
                         </h2>
                         <Button size="xs" variant="ghost" onClick={handleNewChat}>
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
-                            New
+                            {t.common.new}
                         </Button>
                     </div>
                     <div className="flex-1 overflow-y-auto">
@@ -267,13 +269,13 @@ export default function MessagesPage() {
                             <div className="p-4 space-y-2">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        Start a new conversation
+                                        {t.common.startNewConversation}
                                     </span>
                                     <button
                                         onClick={() => setShowNewChat(false)}
                                         className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                     >
-                                        Cancel
+                                        {t.common.cancel}
                                     </button>
                                 </div>
                                 {loadingContacts ? (
@@ -283,8 +285,8 @@ export default function MessagesPage() {
                                 ) : contacts.length === 0 ? (
                                     <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-4">
                                         {user.role === "PATIENT"
-                                            ? "Book an appointment to message a doctor"
-                                            : "No patients yet"}
+                                            ? t.common.bookToMessage
+                                            : t.common.noPatientsYet}
                                     </p>
                                 ) : (
                                     contacts.map((contact) => (
@@ -301,7 +303,7 @@ export default function MessagesPage() {
                                                     {contact.name}
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    {contact.type === "DOCTOR" ? "Doctor" : "Patient"}
+                                                    {contact.type === "DOCTOR" ? t.common.doctor : t.common.patient}
                                                 </p>
                                             </div>
                                         </button>
@@ -310,12 +312,12 @@ export default function MessagesPage() {
                             </div>
                         ) : conversations.length === 0 ? (
                             <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                                <p>No conversations yet</p>
+                                <p>{t.common.noConversationsYet}</p>
                                 <button
                                     onClick={handleNewChat}
                                     className="mt-2 text-indigo-600 dark:text-indigo-400 hover:underline text-xs"
                                 >
-                                    Start a new conversation
+                                    {t.common.startNewConversation}
                                 </button>
                             </div>
                         ) : (
@@ -345,7 +347,7 @@ export default function MessagesPage() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                                    {conv.lastMessage || "Start chatting..."}
+                                                    {conv.lastMessage || t.common.startChatting}
                                                 </p>
                                                 {conv.unreadCount > 0 && (
                                                     <span className="flex-shrink-0 h-5 min-w-[20px] px-1.5 rounded-full bg-indigo-500 text-[10px] font-bold text-white flex items-center justify-center">
@@ -375,7 +377,7 @@ export default function MessagesPage() {
                                         {selectedConversation.userName}
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        {selectedConversation.userType === "DOCTOR" ? "Doctor" : "Patient"}
+                                        {selectedConversation.userType === "DOCTOR" ? t.common.doctor : t.common.patient}
                                     </p>
                                 </div>
                             </div>
@@ -384,7 +386,7 @@ export default function MessagesPage() {
                             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                                 {messages.length === 0 && (
                                     <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
-                                        No messages yet. Say hello!
+                                        {t.common.sayHello}
                                     </div>
                                 )}
                                 {messages.map((msg) => {
@@ -422,7 +424,7 @@ export default function MessagesPage() {
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                                        placeholder="Type a message..."
+                                        placeholder={t.messages.typeMessage}
                                         className="flex-1 px-4 py-2 text-sm rounded-full border border-slate-200 dark:border-dark-600 bg-white dark:bg-dark-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                     <Button
@@ -431,7 +433,7 @@ export default function MessagesPage() {
                                         disabled={!newMessage.trim()}
                                         className="rounded-full px-5"
                                     >
-                                        Send
+                                        {t.messages.send}
                                     </Button>
                                 </div>
                             </div>
@@ -439,8 +441,8 @@ export default function MessagesPage() {
                     ) : (
                         <div className="flex-1 flex items-center justify-center">
                             <EmptyState
-                                title="Select a conversation"
-                                description="Choose a conversation from the list or start a new one."
+                                title={t.common.selectConversation}
+                                description={t.common.chooseFromList}
                             />
                         </div>
                     )}

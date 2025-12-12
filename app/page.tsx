@@ -7,6 +7,7 @@ import Link from "next/link";
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
+import { useTranslation } from "@/lib/i18n";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -74,6 +75,7 @@ const HeartIcon = () => (
 );
 
 export default function HomePage() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<CurrentUser>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -109,19 +111,19 @@ export default function HomePage() {
 
   const heroTitle = user
     ? isPatient
-      ? "Ready for your next visit?"
-      : "Stay in control of your clinic schedule."
-    : "Healthcare booking, reimagined.";
+      ? t.home.readyForVisit
+      : t.home.stayInControl
+    : t.home.bookingReimagined;
 
   const heroSubtitle = user
     ? isPatient
-      ? "Browse your doctors, pick the best time, and confirm in seconds. No calls, no waiting."
-      : "Define your working hours, choose rooms, and let patients book only when you are truly available."
-    : "Find a clinic, choose your preferred doctor, and confirm your appointment without phone calls.";
+      ? t.home.heroSubtitlePatient
+      : t.home.heroSubtitleDoctor
+    : t.home.heroSubtitleGuest;
 
   return (
     <PageShell
-      title={user ? `Welcome, ${user.full_name}` : "Book your next clinic visit"}
+      title={user ? `${t.common.welcomeBack}, ${user.full_name}` : t.home.heroTitle}
       description={heroSubtitle}
     >
       <div className="space-y-20 hero-bg">
@@ -142,7 +144,7 @@ export default function HomePage() {
                 <SparklesIcon />
               </span>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                Clinify · Smart clinic appointment platform
+                {t.home.clinifyBadge}
               </span>
             </div>
 
@@ -172,20 +174,20 @@ export default function HomePage() {
                 <>
                   <Link href="/dashboard">
                     <Button size="lg" className="btn-gradient btn-glow px-8 py-3 text-base font-semibold rounded-xl">
-                      Go to dashboard
+                      {t.nav.dashboard}
                     </Button>
                   </Link>
                   {isPatient && (
                     <Link href="/book">
                       <Button size="lg" variant="outline" className="px-8 py-3 text-base font-semibold rounded-xl border-2 hover:bg-indigo-50 hover:border-indigo-300">
-                        Book an appointment
+                        {t.appointments.book}
                       </Button>
                     </Link>
                   )}
                   {isDoctor && (
                     <Link href="/doctor/schedule">
                       <Button size="lg" variant="outline" className="px-8 py-3 text-base font-semibold rounded-xl border-2 hover:bg-indigo-50 hover:border-indigo-300">
-                        Manage schedule
+                        {t.nav.schedule}
                       </Button>
                     </Link>
                   )}
@@ -194,12 +196,12 @@ export default function HomePage() {
                 <>
                   <Link href="/login?redirect=/book">
                     <Button size="lg" className="btn-gradient btn-glow px-8 py-3 text-base font-semibold rounded-xl">
-                      Book an appointment
+                      {t.home.bookNow}
                     </Button>
                   </Link>
                   <Link href="/register">
                     <Button size="lg" variant="outline" className="px-8 py-3 text-base font-semibold rounded-xl border-2 hover:bg-indigo-50 hover:border-indigo-300">
-                      Create account
+                      {t.nav.register}
                     </Button>
                   </Link>
                 </>
@@ -222,8 +224,8 @@ export default function HomePage() {
                   <PhoneIcon />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">Zero</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Phone calls</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">{t.common.zero}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t.common.phoneCalls}</p>
                 </div>
               </div>
               <div className="stat-card flex items-center gap-3 min-w-[140px]">
@@ -232,7 +234,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <p className="text-xl font-bold text-slate-900 dark:text-white">100%</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Validated</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t.common.validated}</p>
                 </div>
               </div>
             </div>
@@ -255,8 +257,8 @@ export default function HomePage() {
                     <HeartIcon />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Real clinic environments</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">Built for everyday patient visits</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{t.common.realClinicEnvironments}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300">{t.common.builtForPatients}</p>
                   </div>
                 </div>
               </div>
@@ -272,10 +274,10 @@ export default function HomePage() {
         <section className={`relative z-10 ${mounted ? 'animate-fade-in-up delay-300' : 'opacity-0'}`}>
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
-              Designed for <span className="text-gradient">everyone</span>
+              {t.common.designedForEveryone}
             </h2>
             <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-              Whether you&apos;re a patient looking for care or a doctor managing your practice, Clinify adapts to your needs.
+              {t.common.designedForEveryoneDesc}
             </p>
           </div>
 
@@ -286,25 +288,23 @@ export default function HomePage() {
                 <UserGroupIcon />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                For patients
+                {t.common.forPatients}
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Search clinics, see each doctor&apos;s available slots, and book
-                in a few clicks. Get a clear summary of your upcoming appointments
-                and receive automatic updates when doctors change schedules.
+                {t.common.forPatientsDesc}
               </p>
               <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Easy online booking</span>
+                  <span>{t.common.easyOnlineBooking}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Appointment reminders</span>
+                  <span>{t.common.appointmentReminders}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Schedule notifications</span>
+                  <span>{t.common.scheduleNotifications}</span>
                 </li>
               </ul>
             </div>
@@ -315,25 +315,23 @@ export default function HomePage() {
                 <CalendarIcon />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                For doctors
+                {t.common.forDoctors}
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Define working days per clinic and room, prevent overlapping
-                schedules, and automatically generate valid slots. Set your own
-                consultation fee and let Clinify handle the rest.
+                {t.common.forDoctorsDesc}
               </p>
               <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Flexible scheduling</span>
+                  <span>{t.common.flexibleScheduling}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Multi-clinic support</span>
+                  <span>{t.common.multiClinicSupport}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Custom pricing</span>
+                  <span>{t.common.customPricing}</span>
                 </li>
               </ul>
             </div>
@@ -344,25 +342,23 @@ export default function HomePage() {
                 <BuildingIcon />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                For clinics
+                {t.common.forClinics}
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Centralize booking across multiple branches and rooms. Reduce
-                phone traffic, avoid double-booking, and have a single source of
-                truth for clinic occupancy.
+                {t.common.forClinicsDesc}
               </p>
               <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Centralized management</span>
+                  <span>{t.common.centralizedManagement}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Room allocation</span>
+                  <span>{t.common.roomAllocation}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span>Occupancy tracking</span>
+                  <span>{t.common.occupancyTracking}</span>
                 </li>
               </ul>
             </div>
@@ -378,15 +374,15 @@ export default function HomePage() {
                 <SparklesIcon />
               </div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                How Clinify works
+                {t.common.howClinifyWorks}
               </h2>
             </div>
             <ol className="space-y-4">
               {[
-                { step: 1, text: "Create a patient or doctor account in seconds." },
-                { step: 2, text: "Doctors set their working days, rooms, and consultation fee per clinic." },
-                { step: 3, text: "Patients see only valid, future slots and book securely." },
-                { step: 4, text: "Any schedule changes automatically cancel affected appointments and surface alerts." }
+                { step: 1, text: t.common.step1 },
+                { step: 2, text: t.common.step2 },
+                { step: 3, text: t.common.step3 },
+                { step: 4, text: t.common.step4 }
               ].map((item) => (
                 <li key={item.step} className="flex gap-4 items-start">
                   <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold">
@@ -405,15 +401,15 @@ export default function HomePage() {
                 <ShieldIcon />
               </div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                Why clinics choose Clinify
+                {t.common.whyClinics}
               </h2>
             </div>
             <ul className="space-y-4">
               {[
-                "Prevents double-booking with strict schedule validations",
-                "Blocks rooms under maintenance from being assigned to new slots",
-                "Guards against past-time bookings and automatically cleans up expired slots",
-                "Gives both patients and doctors a clear view of upcoming visits"
+                t.common.benefit1,
+                t.common.benefit2,
+                t.common.benefit3,
+                t.common.benefit4
               ].map((item, i) => (
                 <li key={i} className="flex gap-3 items-start">
                   <div className="flex-shrink-0 mt-0.5 text-emerald-500 dark:text-emerald-400">
@@ -436,10 +432,10 @@ export default function HomePage() {
             <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="text-white">
                 <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                  Start managing your clinic visits in one place
+                  {t.common.startManaging}
                 </h2>
                 <p className="text-white/80 text-sm md:text-base">
-                  Create an account in seconds and see how simple booking can be.
+                  {t.common.startManagingDesc}
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -450,7 +446,7 @@ export default function HomePage() {
                       variant="secondary"
                       className="!bg-white !text-indigo-700 hover:!bg-indigo-50 font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
                     >
-                      Open dashboard
+                      {t.home.openDashboard}
                     </Button>
                   </Link>
                 ) : (
@@ -461,7 +457,7 @@ export default function HomePage() {
                         variant="secondary"
                         className="!bg-white !text-indigo-700 hover:!bg-indigo-50 font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
                       >
-                        Sign up free
+                        {t.common.signUpFree}
                       </Button>
                     </Link>
                     <Link href="/login">
@@ -470,7 +466,7 @@ export default function HomePage() {
                         variant="ghost"
                         className="!border-2 !border-white/30 !bg-white/10 !text-white hover:!bg-white/20 font-semibold px-8 py-3 rounded-xl backdrop-blur-sm"
                       >
-                        I already have an account
+                        {t.common.alreadyHaveAccount}
                       </Button>
                     </Link>
                   </>
@@ -492,43 +488,41 @@ export default function HomePage() {
                 <span className="text-lg font-bold text-slate-900 dark:text-white">Clinify</span>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm leading-relaxed">
-                Smart clinic appointment booking for patients and doctors.
-                Built for managing real clinic workflows with secure booking,
-                clear pricing, and smart schedules.
+                {t.common.footerDesc}
               </p>
             </div>
 
             {/* Quick Links */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Quick Links</h3>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">{t.common.quickLinks}</h3>
               <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <li><Link href="/book" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Book Appointment</Link></li>
-                <li><Link href="/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Dashboard</Link></li>
-                <li><Link href="/login" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Login</Link></li>
-                <li><Link href="/register" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Register</Link></li>
+                <li><Link href="/book" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.appointments.book}</Link></li>
+                <li><Link href="/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.nav.dashboard}</Link></li>
+                <li><Link href="/login" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.nav.login}</Link></li>
+                <li><Link href="/register" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.nav.register}</Link></li>
               </ul>
             </div>
 
             {/* Contact */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Support</h3>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">{t.common.support}</h3>
               <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <li><Link href="/help" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Help Center</Link></li>
-                <li><Link href="/contact" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Contact Us</Link></li>
-                <li><Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
+                <li><Link href="/help" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.common.helpCenter}</Link></li>
+                <li><Link href="/contact" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.common.contactUs}</Link></li>
+                <li><Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.common.privacyPolicy}</Link></li>
+                <li><Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.common.termsOfService}</Link></li>
               </ul>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-8 border-t border-slate-200/50 dark:border-dark-700 text-xs text-slate-500 dark:text-slate-400">
-            <p>© {new Date().getFullYear()} Clinify. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Clinify. {t.common.allRightsReserved}.</p>
             <div className="flex items-center gap-4">
-              <span>Secure booking</span>
+              <span>{t.home.secureBooking}</span>
               <span>·</span>
-              <span>Clear pricing</span>
+              <span>{t.home.clearPricing}</span>
               <span>·</span>
-              <span>Smart schedules</span>
+              <span>{t.home.smartSchedules}</span>
             </div>
           </div>
         </footer>

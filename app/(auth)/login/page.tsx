@@ -6,6 +6,7 @@ import PageShell from "@/components/PageShell";
 import Input from "@/components/Input";
 import Select from "@/components/Select";
 import Button from "@/components/Button";
+import { useTranslation } from "@/lib/i18n";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const { t } = useTranslation();
 
   const [role, setRole] = useState<Role>("PATIENT");
   const [email, setEmail] = useState("");
@@ -35,13 +37,12 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
+        setError(data.error ?? t.errors.somethingWentWrong);
       } else {
-        // Redirect to intended destination or dashboard
         router.push(redirectTo);
       }
     } catch {
-      setError("Network error.");
+      setError(t.errors.somethingWentWrong);
     } finally {
       setLoading(false);
     }
@@ -49,27 +50,27 @@ export default function LoginPage() {
 
   return (
     <PageShell
-      title="Sign in"
-      description="Access your clinics booking dashboard."
+      title={t.auth.signIn}
+      description={t.nav.dashboard}
     >
       <div className="mx-auto max-w-md rounded-2xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 p-6 shadow-sm">
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Role
+              {t.auth.asPatient} / {t.auth.asDoctor}
             </label>
             <Select
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
             >
-              <option value="PATIENT">Patient</option>
-              <option value="DOCTOR">Doctor</option>
+              <option value="PATIENT">{t.auth.asPatient}</option>
+              <option value="DOCTOR">{t.auth.asDoctor}</option>
             </Select>
           </div>
 
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Email
+              {t.auth.email}
             </label>
             <Input
               type="email"
@@ -77,13 +78,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t.auth.emailPlaceholder}
             />
           </div>
 
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Password
+              {t.auth.password}
             </label>
             <Input
               type="password"
@@ -91,7 +92,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder={t.auth.passwordPlaceholder}
             />
           </div>
 
@@ -104,7 +105,7 @@ export default function LoginPage() {
             className="w-full"
             isLoading={loading}
           >
-            Sign in
+            {t.auth.signIn}
           </Button>
         </form>
       </div>

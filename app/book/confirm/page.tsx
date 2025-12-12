@@ -11,6 +11,7 @@ import Select from "@/components/Select";
 import Input from "@/components/Input";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
+import { useTranslation } from "@/lib/i18n";
 
 type Clinic = {
   _id: string;
@@ -45,6 +46,7 @@ type SlotItem = {
 export default function ConfirmBookingPage() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useTranslation();
 
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [clinic, setClinic] = useState<Clinic | null>(null);
@@ -65,7 +67,7 @@ export default function ConfirmBookingPage() {
     const date = params.get("date");
 
     if (!doctorId || !clinicId || !roomId || !slotId || !date) {
-      setError("Missing booking details. Please start again.");
+      setError(t.errors.somethingWentWrong);
       setLoading(false);
       return;
     }
@@ -82,7 +84,7 @@ export default function ConfirmBookingPage() {
         ]);
 
         if (!doctorsRes.ok || !clinicsRes.ok || !slotsRes.ok) {
-          setError("Failed to load booking details.");
+          setError(t.errors.failedToLoad);
           setLoading(false);
           return;
         }
@@ -100,7 +102,7 @@ export default function ConfirmBookingPage() {
         const s = slots.find((ss) => ss._id === slotId) ?? null;
 
         if (!d || !c || !s) {
-          setError("Selected slot is no longer available.");
+          setError(t.appointments.noSlotsAvailable);
           setLoading(false);
           return;
         }
@@ -109,14 +111,14 @@ export default function ConfirmBookingPage() {
         setClinic(c);
         setSlot(s);
       } catch {
-        setError("Failed to load booking details.");
+        setError(t.errors.failedToLoad);
       } finally {
         setLoading(false);
       }
     }
 
     load();
-  }, [params]);
+  }, [params, t]);
 
   async function handleConfirm() {
     setError(null);
@@ -127,7 +129,7 @@ export default function ConfirmBookingPage() {
     const slotId = params.get("slotId");
 
     if (!doctorId || !clinicId || !roomId || !slotId) {
-      setError("Missing booking details. Please start again.");
+      setError(t.errors.somethingWentWrong);
       return;
     }
 
@@ -150,14 +152,14 @@ export default function ConfirmBookingPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data?.error ?? "Failed to confirm appointment.");
+        setError(data?.error ?? t.errors.failedToSave);
         return;
       }
 
       // Success → go to dashboard
       router.push("/dashboard");
     } catch {
-      setError("Network error while confirming appointment.");
+      setError(t.errors.networkError);
     } finally {
       setBooking(false);
     }
@@ -166,8 +168,8 @@ export default function ConfirmBookingPage() {
   if (loading) {
     return (
       <PageShell
-        title="Confirm your appointment"
-        description="Review the details and complete payment."
+        title={t.appointments.confirmYourBooking}
+        description={t.appointments.bookingDetails}
       >
         <LoadingSpinner />
       </PageShell>
@@ -177,11 +179,11 @@ export default function ConfirmBookingPage() {
   if (error && !slot) {
     return (
       <PageShell
-        title="Confirm your appointment"
-        description="There was a problem with this booking."
+        title={t.appointments.confirmYourBooking}
+        description={t.errors.somethingWentWrong}
       >
         <EmptyState
-          title="Unable to load booking details"
+          title={t.errors.failedToLoad}
           description={error}
         />
       </PageShell>
@@ -191,12 +193,12 @@ export default function ConfirmBookingPage() {
   if (!doctor || !clinic || !slot) {
     return (
       <PageShell
-        title="Confirm your appointment"
-        description="There was a problem with this booking."
+        title={t.appointments.confirmYourBooking}
+        description={t.errors.somethingWentWrong}
       >
         <EmptyState
-          title="Selected slot is no longer available"
-          description="Please go back and choose another time."
+          title={t.appointments.noSlotsAvailable}
+          description={t.appointments.tryDifferentFilters}
         />
       </PageShell>
     );
@@ -209,43 +211,43 @@ export default function ConfirmBookingPage() {
 
   return (
     <PageShell
-      title="Confirm your appointment"
-      description="Review the details and complete your booking."
+      title={t.appointments.confirmYourBooking}
+      description={t.appointments.bookingDetails}
     >
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: appointment details */}
         <Card className="space-y-4 lg:col-span-2">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Appointment details
+            {t.appointments.bookingDetails}
           </h2>
           <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
             <p>
-              <span className="font-medium text-slate-900 dark:text-white">Doctor:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">{t.common.doctor}:</span>{" "}
               {doctor.full_name}
               {doctor.specializations && doctor.specializations.length > 0
                 ? ` – ${doctor.specializations.join(", ")}`
                 : ""}
             </p>
             <p>
-              <span className="font-medium text-slate-900 dark:text-white">Clinic:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">{t.appointments.clinic}:</span>{" "}
               {clinic.name}
               {clinic.address?.city ? ` – ${clinic.address.city}` : ""}
             </p>
             <p>
-              <span className="font-medium text-slate-900 dark:text-white">Room:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">{t.appointments.room}:</span>{" "}
               {slot.room.room_number}
             </p>
             <p>
-              <span className="font-medium text-slate-900 dark:text-white">Date:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">{t.appointments.date}:</span>{" "}
               {slot.date}
             </p>
             <p>
-              <span className="font-medium text-slate-900 dark:text-white">Time:</span>{" "}
+              <span className="font-medium text-slate-900 dark:text-white">{t.appointments.selectTime}:</span>{" "}
               {slot.time}
             </p>
             <p>
               <span className="font-medium text-slate-900 dark:text-white">
-                Consultation fee:
+                {t.doctors.consultationFee}:
               </span>{" "}
               {fee} EGP
             </p>
@@ -255,30 +257,30 @@ export default function ConfirmBookingPage() {
         {/* Right: payment */}
         <Card className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Payment & confirmation
+            {t.appointments.payment}
           </h2>
 
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Payment method
+              {t.appointments.paymentMethod}
             </label>
             <Select
               value={method}
               onChange={(e) => setMethod(e.target.value as "CASH" | "CARD")}
             >
-              <option value="CASH">Cash at clinic</option>
-              <option value="CARD">Card</option>
+              <option value="CASH">{t.appointments.payAtClinic}</option>
+              <option value="CARD">{t.appointments.card}</option>
             </Select>
           </div>
 
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Notes for the doctor (optional)
+              {t.appointments.notes}
             </label>
             <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Short description of your visit reason"
+              placeholder={t.appointments.notes}
             />
           </div>
 
@@ -286,12 +288,8 @@ export default function ConfirmBookingPage() {
 
           <div className="pt-2 border-t border-slate-100 dark:border-dark-700 flex flex-col gap-2 text-xs text-slate-600 dark:text-slate-300">
             <p>
-              You will pay <span className="font-semibold">{fee} EGP</span>{" "}
-              ({method.toLowerCase()}) for this consultation.
-            </p>
-            <p>
-              By confirming, you agree that missed or late arrivals may require
-              rescheduling with the clinic.
+              {t.appointments.fee}: <span className="font-semibold">{fee} EGP</span>{" "}
+              ({method.toLowerCase()})
             </p>
           </div>
 
@@ -301,7 +299,7 @@ export default function ConfirmBookingPage() {
             isLoading={booking}
             onClick={handleConfirm}
           >
-            Confirm and pay
+            {t.appointments.confirmBooking}
           </Button>
         </Card>
       </div>

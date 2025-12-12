@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Card from "./Card";
 import Button from "./Button";
+import { useTranslation } from "@/lib/i18n";
 
 interface RatingModalProps {
     isOpen: boolean;
@@ -20,6 +21,7 @@ export default function RatingModal({
     appointmentId,
     onSuccess
 }: RatingModalProps) {
+    const { t } = useTranslation();
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [review, setReview] = useState("");
@@ -30,7 +32,7 @@ export default function RatingModal({
 
     async function handleSubmit() {
         if (rating === 0) {
-            setError("Please select a rating");
+            setError(t.errors.invalidInput);
             return;
         }
 
@@ -52,7 +54,7 @@ export default function RatingModal({
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.error || "Failed to submit rating");
+                setError(data.error || t.errors.somethingWentWrong);
                 return;
             }
 
@@ -61,13 +63,22 @@ export default function RatingModal({
             setRating(0);
             setReview("");
         } catch {
-            setError("Failed to submit rating");
+            setError(t.errors.somethingWentWrong);
         } finally {
             setLoading(false);
         }
     }
 
     const displayRating = hoverRating || rating;
+
+    const getRatingLabel = (r: number) => {
+        if (r === 0) return "";
+        if (r === 1) return t.ratings.poor;
+        if (r === 2) return t.ratings.fair;
+        if (r === 3) return t.ratings.good;
+        if (r === 4) return t.ratings.veryGood;
+        return t.ratings.excellent;
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -89,10 +100,10 @@ export default function RatingModal({
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            Rate your visit
+                            {t.ratings.rateYourVisit}
                         </h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            How was your experience with <span className="font-medium text-indigo-600 dark:text-indigo-400">Dr. {doctorName}</span>?
+                            {t.ratings.howWasExperience} <span className="font-medium text-indigo-600 dark:text-indigo-400">{t.doctors.doctor} {doctorName}</span>?
                         </p>
                     </div>
                     <button
@@ -132,12 +143,7 @@ export default function RatingModal({
                                 ? "text-indigo-600 dark:text-indigo-400"
                                 : "text-slate-400 dark:text-slate-500"
                             }`}>
-                            {displayRating === 0 && "Select a rating"}
-                            {displayRating === 1 && "Poor"}
-                            {displayRating === 2 && "Fair"}
-                            {displayRating === 3 && "Good"}
-                            {displayRating === 4 && "Very Good"}
-                            {displayRating === 5 && "Excellent! ✨"}
+                            {getRatingLabel(displayRating)}
                         </span>
                     </div>
                 </div>
@@ -145,12 +151,12 @@ export default function RatingModal({
                 {/* Review Text */}
                 <div className="mb-6">
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Write a review <span className="text-slate-400">(optional)</span>
+                        {t.ratings.writeReview} <span className="text-slate-400">({t.ratings.reviewOptional})</span>
                     </label>
                     <textarea
                         value={review}
                         onChange={(e) => setReview(e.target.value)}
-                        placeholder="Share your experience with this doctor..."
+                        placeholder="..."
                         rows={3}
                         maxLength={500}
                         className="w-full rounded-xl border border-slate-200 dark:border-dark-600 bg-slate-50 dark:bg-dark-700 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
@@ -175,7 +181,7 @@ export default function RatingModal({
                         onClick={onClose}
                         className="flex-1"
                     >
-                        Cancel
+                        {t.common.cancel}
                     </Button>
                     <Button
                         variant="gradient"
@@ -185,7 +191,7 @@ export default function RatingModal({
                         isLoading={loading}
                         className="flex-1"
                     >
-                        Submit Rating
+                        {t.ratings.submitRating}
                     </Button>
                 </div>
             </Card>

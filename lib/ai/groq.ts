@@ -43,8 +43,11 @@ const MEDICAL_SPECIALTIES = [
 export async function analyzeSymptoms(
     symptomsDescription: string,
     patientAge?: number,
-    patientGender?: string
+    patientGender?: string,
+    language: "en" | "ar" = "en"
 ): Promise<SymptomAnalysis> {
+    const isArabic = language === "ar";
+
     const systemPrompt = `You are a medical triage assistant. Your role is to:
 1. Analyze patient symptoms described in natural language
 2. Suggest appropriate medical specialties they should consult
@@ -58,13 +61,14 @@ IMPORTANT:
 - EMERGENCY should only be for life-threatening symptoms
 - Always suggest General Practice if symptoms are vague
 - You are NOT diagnosing, only suggesting which specialists to see
+${isArabic ? "- IMPORTANT: Respond with the summary and followUpQuestions in Arabic language. The specialty names should remain in English." : ""}
 
 Respond ONLY with valid JSON (no markdown, no code blocks):
 {
     "suggestedSpecialties": ["Specialty1", "Specialty2"],
     "urgencyLevel": "LOW",
-    "summary": "Brief explanation",
-    "followUpQuestions": ["Optional questions"]
+    "summary": "${isArabic ? "ملخص قصير بالعربية" : "Brief explanation"}",
+    "followUpQuestions": ["${isArabic ? "أسئلة اختيارية بالعربية" : "Optional questions"}"]
 }`;
 
     const userMessage = `Patient symptoms: ${symptomsDescription}

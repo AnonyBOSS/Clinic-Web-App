@@ -9,6 +9,7 @@ import Input from "@/components/Input";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
+import { useTranslation } from "@/lib/i18n";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -23,6 +24,7 @@ type CurrentUser = {
 };
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -236,7 +238,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <PageShell title="Profile">
+      <PageShell title={t.profile.title}>
         <LoadingSpinner />
       </PageShell>
     );
@@ -245,12 +247,12 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <PageShell
-        title="Profile"
-        description="You need to be signed in to edit your profile."
+        title={t.profile.title}
+        description={t.errors.unauthorized}
       >
         <EmptyState
-          title="Not signed in"
-          description="Log in to manage your profile details."
+          title={t.errors.unauthorized}
+          description={t.nav.login}
         />
       </PageShell>
     );
@@ -260,14 +262,14 @@ export default function ProfilePage() {
 
   return (
     <PageShell
-      title="Profile settings"
-      description="Update your personal information and account settings."
+      title={t.profile.title}
+      description={t.profile.personalInfo}
     >
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Basic information
+              {t.profile.personalInfo}
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -283,7 +285,7 @@ export default function ProfilePage() {
 
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Phone
+                  {t.auth.phone}
                 </label>
                 <Input
                   value={phone}
@@ -293,7 +295,7 @@ export default function ProfilePage() {
 
               <div className="space-y-1 sm:col-span-2">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Email
+                  {t.auth.email}
                 </label>
                 <Input
                   type="email"
@@ -301,7 +303,7 @@ export default function ProfilePage() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Changing your email will impact how you sign in next time.
+                  {t.dashboard.emailChangeWarning}
                 </p>
               </div>
             </div>
@@ -309,12 +311,12 @@ export default function ProfilePage() {
             {isDoctor && (
               <>
                 <h2 className="pt-4 text-sm font-semibold text-slate-900 dark:text-white">
-                  Professional details
+                  {t.profile.professionalDetails}
                 </h2>
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                    Qualifications
+                    {t.doctors.qualifications}
                   </label>
                   <Input
                     value={qualifications}
@@ -324,7 +326,7 @@ export default function ProfilePage() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                    Specializations
+                    {t.doctors.specialization}
                   </label>
                   <Input
                     value={specializationsStr}
@@ -343,30 +345,30 @@ export default function ProfilePage() {
             )}
 
             <h2 className="pt-4 text-sm font-semibold text-slate-900 dark:text-white">
-              Change password
+              {t.profile.changePassword}
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Current password
+                  {t.profile.currentPassword}
                 </label>
                 <Input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Leave empty to keep current password"
+                  placeholder={t.profile.leaveEmpty}
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  New password
+                  {t.profile.newPassword}
                 </label>
                 <Input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Leave empty to keep current password"
+                  placeholder={t.profile.leaveEmpty}
                 />
               </div>
             </div>
@@ -380,7 +382,7 @@ export default function ProfilePage() {
 
             <div className="pt-2">
               <Button type="submit" isLoading={saving}>
-                Save changes
+                {t.common.save}
               </Button>
             </div>
           </form>
@@ -388,30 +390,28 @@ export default function ProfilePage() {
 
         <Card className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Account overview
+            {t.profile.accountOverview}
           </h2>
           <p className="text-xs text-slate-600 dark:text-slate-300">
-            This profile is tied to your{" "}
+            {t.profile.accountTiedTo}{" "}
             <span className="font-medium">
-              {isDoctor ? "doctor" : "patient"}
+              {isDoctor ? t.common.doctor : t.common.patient}
             </span>{" "}
-            account. These changes will be reflected across bookings,
-            appointments, and dashboards.
+            {t.profile.changesReflected}
           </p>
           <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-            <li>• Keep your phone and email correct for clinic contact.</li>
-            <li>• Doctors should keep their specializations accurate.</li>
-            <li>• Use a strong password and don&apos;t share it.</li>
+            <li>• {t.profile.keepCorrect}</li>
+            <li>• {t.profile.doctorsKeepAccurate}</li>
+            <li>• {t.profile.useStrongPassword}</li>
           </ul>
 
           {/* Delete Account Section */}
           <div className="pt-4 border-t border-slate-200 dark:border-dark-700">
             <h3 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-2">
-              Danger Zone
+              {t.profile.dangerZone}
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-              Permanently delete your account and all associated data including
-              appointments, messages, and notifications.
+              {t.profile.deleteWarning}
             </p>
             <Button
               variant="outline"
@@ -419,7 +419,7 @@ export default function ProfilePage() {
               className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
               onClick={() => setShowDeleteModal(true)}
             >
-              Delete Account
+              {t.profile.deleteAccount}
             </Button>
           </div>
         </Card>
@@ -431,11 +431,11 @@ export default function ProfilePage() {
           <div className="flex items-center gap-2 mb-4">
             <span className="w-2 h-2 rounded-full bg-amber-500" />
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-              My Ratings
+              {t.ratings.myRatings}
             </h2>
             {myRatings.length > 0 && (
               <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
-                {myRatings.length} rating{myRatings.length !== 1 ? "s" : ""}
+                {myRatings.length} {t.ratings.ratingsCount}
               </span>
             )}
           </div>
@@ -480,7 +480,7 @@ export default function ProfilePage() {
                       <Input
                         value={editReviewValue}
                         onChange={(e) => setEditReviewValue(e.target.value)}
-                        placeholder="Your review (optional)"
+                        placeholder={t.ratings.reviewPlaceholder}
                       />
                       <div className="flex gap-2 justify-end">
                         <Button
@@ -488,10 +488,10 @@ export default function ProfilePage() {
                           variant="outline"
                           onClick={() => setEditingRatingId(null)}
                         >
-                          Cancel
+                          {t.common.cancel}
                         </Button>
                         <Button size="sm" onClick={() => handleUpdateRating(rating._id)}>
-                          Save Changes
+                          {t.common.save}
                         </Button>
                       </div>
                     </div>
@@ -579,12 +579,12 @@ export default function ProfilePage() {
             </ul>
             <div className="space-y-2">
               <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                Type <span className="font-bold">DELETE</span> to confirm:
+                {t.profile.typeToConfirm}:
               </label>
               <Input
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="Type DELETE"
+                placeholder={t.profile.typeToConfirm}
               />
             </div>
             {error && <p className="text-xs text-red-600">{error}</p>}
@@ -599,7 +599,7 @@ export default function ProfilePage() {
                 }}
                 disabled={deleting}
               >
-                Cancel
+                {t.common.cancel}
               </Button>
               <Button
                 size="sm"
@@ -608,7 +608,7 @@ export default function ProfilePage() {
                 disabled={deleteConfirmText !== "DELETE" || deleting}
                 isLoading={deleting}
               >
-                Delete Forever
+                {t.profile.deleteAccount}
               </Button>
             </div>
           </Card>

@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 type NotificationItem = {
     _id: string;
@@ -14,6 +15,7 @@ type NotificationItem = {
 };
 
 export default function NotificationBell() {
+    const { t } = useTranslation();
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [open, setOpen] = useState(false);
@@ -205,13 +207,13 @@ export default function NotificationBell() {
             {open && (
                 <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white dark:bg-dark-800 shadow-xl border border-slate-200 dark:border-dark-600 z-50 overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-dark-600">
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t.nav.notifications}</h3>
                         {unreadCount > 0 && (
                             <button
                                 onClick={markAllRead}
                                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                             >
-                                Mark all read
+                                {t.common.markAllRead}
                             </button>
                         )}
                     </div>
@@ -219,7 +221,7 @@ export default function NotificationBell() {
                     <div className="max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
                             <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                                No notifications yet
+                                {t.nav.noNotifications}
                             </div>
                         ) : (
                             notifications.map((n) => (
