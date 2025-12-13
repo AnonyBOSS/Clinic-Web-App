@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/connection";
-import Appointment from "@/models/Appointment";
-import Slot from "@/models/Slot";
+import { Appointment } from "@/models/Appointment";
+import { Slot } from "@/models/Slot";
 import { getAuthUserFromRequest } from "@/lib/auth-request";
 
 type RouteParams = {
@@ -36,12 +36,12 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     const isPatient =
-      authUser.role === "patient" &&
-      appointment.patient_id?.toString() === authUser.id;
+      (authUser.role as string) === "patient" &&
+      appointment.patient?.toString() === authUser.id;
 
     const isDoctor =
-      authUser.role === "doctor" &&
-      appointment.doctor_id?.toString() === authUser.id;
+      (authUser.role as string) === "doctor" &&
+      appointment.doctor?.toString() === authUser.id;
 
     if (!isPatient && !isDoctor) {
       return NextResponse.json(
@@ -51,13 +51,13 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     // Set appointment as cancelled
-    appointment.status = "cancelled";
+    appointment.status = "CANCELLED";
     await appointment.save();
 
     // Free the slot if exists
-    if (appointment.slot_id) {
-      await Slot.findByIdAndUpdate(appointment.slot_id, {
-        status: "available",
+    if (appointment.slot) {
+      await Slot.findByIdAndUpdate(appointment.slot, {
+        status: "AVAILABLE",
       });
     }
 
