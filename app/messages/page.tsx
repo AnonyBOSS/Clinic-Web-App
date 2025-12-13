@@ -1,7 +1,7 @@
 // app/messages/page.tsx
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
@@ -42,7 +42,7 @@ type ContactOption = {
     type: "PATIENT" | "DOCTOR";
 };
 
-export default function MessagesPage() {
+function MessagesContent() {
     const searchParams = useSearchParams();
     const chatWithId = searchParams.get("chat");
     const { t } = useTranslation();
@@ -449,5 +449,13 @@ export default function MessagesPage() {
                 </Card>
             </div>
         </PageShell>
+    );
+}
+
+export default function MessagesPage() {
+    return (
+        <Suspense fallback={<PageShell title="Messages"><LoadingSpinner /></PageShell>}>
+            <MessagesContent />
+        </Suspense>
     );
 }

@@ -1,7 +1,7 @@
 // app/book/confirm/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import PageShell from "@/components/PageShell";
@@ -43,7 +43,7 @@ type SlotItem = {
   };
 };
 
-export default function ConfirmBookingPage() {
+function ConfirmContent() {
   const router = useRouter();
   const params = useSearchParams();
   const { t } = useTranslation();
@@ -304,5 +304,13 @@ export default function ConfirmBookingPage() {
         </Card>
       </div>
     </PageShell>
+  );
+}
+
+export default function ConfirmBookingPage() {
+  return (
+    <Suspense fallback={<PageShell title="Confirm Booking"><LoadingSpinner /></PageShell>}>
+      <ConfirmContent />
+    </Suspense>
   );
 }

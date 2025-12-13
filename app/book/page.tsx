@@ -1,7 +1,7 @@
 // app/book/page.tsx
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import PageShell from "@/components/PageShell";
@@ -61,7 +61,7 @@ type SlotItem = {
   };
 };
 
-export default function BookPage() {
+function BookContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
@@ -439,5 +439,13 @@ export default function BookPage() {
         </Card>
       </div>
     </PageShell>
+  );
+}
+
+export default function BookPage() {
+  return (
+    <Suspense fallback={<PageShell title="Book Appointment"><LoadingSpinner /></PageShell>}>
+      <BookContent />
+    </Suspense>
   );
 }

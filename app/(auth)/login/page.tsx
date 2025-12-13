@@ -1,16 +1,17 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PageShell from "@/components/PageShell";
 import Input from "@/components/Input";
 import Select from "@/components/Select";
 import Button from "@/components/Button";
 import { useTranslation } from "@/lib/i18n";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 type Role = "PATIENT" | "DOCTOR";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/dashboard";
@@ -110,5 +111,13 @@ export default function LoginPage() {
         </form>
       </div>
     </PageShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<PageShell title="Sign In"><LoadingSpinner /></PageShell>}>
+      <LoginContent />
+    </Suspense>
   );
 }
