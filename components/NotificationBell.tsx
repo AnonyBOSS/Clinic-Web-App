@@ -205,7 +205,7 @@ export default function NotificationBell() {
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white dark:bg-dark-800 shadow-xl border border-slate-200 dark:border-dark-600 z-50 overflow-hidden">
+                <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-16 sm:top-auto sm:mt-2 w-auto sm:w-80 rounded-xl bg-white dark:bg-dark-800 shadow-xl border border-slate-200 dark:border-dark-600 z-50 overflow-hidden max-h-[70vh] sm:max-h-none">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-dark-600">
                         <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t.nav.notifications}</h3>
                         {unreadCount > 0 && (

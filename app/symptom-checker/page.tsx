@@ -12,7 +12,11 @@ interface SymptomAnalysis {
     suggestedSpecialties: string[];
     urgencyLevel: UrgencyLevel;
     summary: string;
+    detailedAnalysis?: string;
+    possibleConditions?: string[];
     followUpQuestions?: string[];
+    selfCareAdvice?: string[];
+    warningSignsToWatch?: string[];
 }
 
 interface RecommendedDoctor {
@@ -31,17 +35,24 @@ interface AnalysisResult {
 }
 
 const urgencyColors: Record<UrgencyLevel, string> = {
-    LOW: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    MEDIUM: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    HIGH: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-    EMERGENCY: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+    LOW: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800",
+    MEDIUM: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+    HIGH: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+    EMERGENCY: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800"
 };
 
 const urgencyIcons: Record<UrgencyLevel, string> = {
     LOW: "✓",
-    MEDIUM: "⚠",
+    MEDIUM: "⚠️",
     HIGH: "⚡",
     EMERGENCY: "🚨"
+};
+
+const urgencyLabels: Record<UrgencyLevel, { en: string; ar: string }> = {
+    LOW: { en: "Low Priority", ar: "أولوية منخفضة" },
+    MEDIUM: { en: "Moderate Priority", ar: "أولوية متوسطة" },
+    HIGH: { en: "High Priority", ar: "أولوية عالية" },
+    EMERGENCY: { en: "Emergency", ar: "طوارئ" }
 };
 
 export default function SymptomCheckerPage() {
@@ -53,11 +64,12 @@ export default function SymptomCheckerPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<AnalysisResult | null>(null);
+    const [activeTab, setActiveTab] = useState<"analysis" | "doctors">("analysis");
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (symptoms.trim().length < 10) {
-            setError("Please describe your symptoms in more detail (at least 10 characters)");
+            setError(t.ai.describeMoreDetail);
             return;
         }
 
@@ -85,7 +97,7 @@ export default function SymptomCheckerPage() {
 
             setResult(data.data);
         } catch (err: any) {
-            setError(err.message || "Something went wrong");
+            setError(err.message || t.errors.somethingWentWrong);
         } finally {
             setLoading(false);
         }
@@ -215,91 +227,202 @@ export default function SymptomCheckerPage() {
                             </div>
                         )}
 
-                        {/* Analysis Card */}
-                        <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-lg border border-slate-200 dark:border-dark-700 p-6">
-                            <div className="flex items-start justify-between mb-4">
-                                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                                    {t.ai.analysisResults}
-                                </h2>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${urgencyColors[result.analysis.urgencyLevel]}`}>
-                                    {urgencyIcons[result.analysis.urgencyLevel]} {result.analysis.urgencyLevel}
-                                </span>
-                            </div>
-
-                            <p className="text-slate-700 dark:text-slate-300 mb-4">
-                                {result.analysis.summary}
-                            </p>
-
-                            <div className="mb-4">
-                                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                    {t.ai.recommendedSpecialties}
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {result.analysis.suggestedSpecialties.map((spec, i) => (
-                                        <span
-                                            key={i}
-                                            className="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm"
-                                        >
-                                            {spec}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {result.analysis.followUpQuestions && result.analysis.followUpQuestions.length > 0 && (
-                                <div className="bg-slate-50 dark:bg-dark-700 rounded-lg p-4">
-                                    <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                        {t.ai.questionsForDoctor}
-                                    </h3>
-                                    <ul className="list-disc list-inside text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                                        {result.analysis.followUpQuestions.map((q, i) => (
-                                            <li key={i}>{q}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
+                        {/* Tabs */}
+                        <div className="flex gap-2 bg-white dark:bg-dark-800 rounded-lg p-1 border border-slate-200 dark:border-dark-700">
+                            <button
+                                onClick={() => setActiveTab("analysis")}
+                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${activeTab === "analysis"
+                                    ? "bg-indigo-600 text-white"
+                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-700"
+                                    }`}
+                            >
+                                📋 {t.ai.analysisResults}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("doctors")}
+                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${activeTab === "doctors"
+                                    ? "bg-indigo-600 text-white"
+                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-700"
+                                    }`}
+                            >
+                                👨‍⚕️ {t.ai.recommendedDoctors} ({result.recommendedDoctors.length})
+                            </button>
                         </div>
 
-                        {/* Recommended Doctors */}
-                        {result.recommendedDoctors.length > 0 && (
+                        {activeTab === "analysis" ? (
+                            /* Analysis Card */
+                            <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-lg border border-slate-200 dark:border-dark-700 p-6 space-y-6">
+                                {/* Header with Urgency */}
+                                <div className="flex items-start justify-between">
+                                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                                        {t.ai.analysisResults}
+                                    </h2>
+                                    <span className={`px-3 py-1 rounded-full text-sm font-medium border ${urgencyColors[result.analysis.urgencyLevel]}`}>
+                                        {urgencyIcons[result.analysis.urgencyLevel]} {urgencyLabels[result.analysis.urgencyLevel][language]}
+                                    </span>
+                                </div>
+
+                                {/* Summary */}
+                                <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800">
+                                    <h3 className="text-sm font-semibold text-indigo-800 dark:text-indigo-300 mb-2">
+                                        📝 {language === "ar" ? "الملخص" : "Summary"}
+                                    </h3>
+                                    <p className="text-slate-700 dark:text-slate-300">
+                                        {result.analysis.summary}
+                                    </p>
+                                </div>
+
+                                {/* Detailed Analysis */}
+                                {result.analysis.detailedAnalysis && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                            🔍 {language === "ar" ? "التحليل المفصل" : "Detailed Analysis"}
+                                        </h3>
+                                        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                            {result.analysis.detailedAnalysis}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Suggested Specialties */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                        🏥 {t.ai.recommendedSpecialties}
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {result.analysis.suggestedSpecialties.map((spec, i) => (
+                                            <span
+                                                key={i}
+                                                className="px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm font-medium"
+                                            >
+                                                {spec}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Possible Conditions */}
+                                {result.analysis.possibleConditions && result.analysis.possibleConditions.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                            💭 {language === "ar" ? "الحالات المحتملة" : "Possible Conditions"}
+                                        </h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {result.analysis.possibleConditions.map((condition, i) => (
+                                                <span
+                                                    key={i}
+                                                    className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-400 text-sm"
+                                                >
+                                                    {condition}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Self-Care Advice */}
+                                {result.analysis.selfCareAdvice && result.analysis.selfCareAdvice.length > 0 && (
+                                    <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800">
+                                        <h3 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">
+                                            💚 {language === "ar" ? "نصائح الرعاية الذاتية" : "Self-Care Advice"}
+                                        </h3>
+                                        <ul className="list-disc list-inside text-sm text-green-700 dark:text-green-400 space-y-1">
+                                            {result.analysis.selfCareAdvice.map((advice, i) => (
+                                                <li key={i}>{advice}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Warning Signs */}
+                                {result.analysis.warningSignsToWatch && result.analysis.warningSignsToWatch.length > 0 && (
+                                    <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border border-orange-100 dark:border-orange-800">
+                                        <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-300 mb-2">
+                                            ⚠️ {language === "ar" ? "علامات تحذيرية يجب مراقبتها" : "Warning Signs to Watch"}
+                                        </h3>
+                                        <ul className="list-disc list-inside text-sm text-orange-700 dark:text-orange-400 space-y-1">
+                                            {result.analysis.warningSignsToWatch.map((sign, i) => (
+                                                <li key={i}>{sign}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Follow-up Questions */}
+                                {result.analysis.followUpQuestions && result.analysis.followUpQuestions.length > 0 && (
+                                    <div className="bg-slate-50 dark:bg-dark-700 rounded-xl p-4">
+                                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                            ❓ {t.ai.questionsForDoctor}
+                                        </h3>
+                                        <ul className="list-disc list-inside text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                                            {result.analysis.followUpQuestions.map((q, i) => (
+                                                <li key={i}>{q}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Disclaimer */}
+                                <div className="text-xs text-slate-500 dark:text-slate-400 text-center pt-4 border-t border-slate-200 dark:border-dark-600">
+                                    ⚠️ {t.ai.notMedicalDiagnosis}
+                                </div>
+                            </div>
+                        ) : (
+                            /* Recommended Doctors */
                             <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-lg border border-slate-200 dark:border-dark-700 p-6">
                                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
                                     {t.ai.recommendedDoctors}
                                 </h2>
-                                <div className="space-y-4">
-                                    {result.recommendedDoctors.map((doc, i) => (
-                                        <div
-                                            key={doc._id}
-                                            className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-dark-700 border border-slate-200 dark:border-dark-600"
-                                        >
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="font-semibold text-slate-900 dark:text-white">
-                                                        {doc.full_name}
-                                                    </h3>
-                                                    {i === 0 && (
-                                                        <span className="px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
-                                                            {t.ai.bestMatch}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                    {doc.specializations.join(", ")}
-                                                </p>
-                                                <div className="flex items-center gap-4 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                                    <span>💰 EGP {doc.consultation_fee}</span>
-                                                    <span>📅 {doc.availableSlots} {t.doctors.slotsAvailable}</span>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => handleBookDoctor(doc._id)}
-                                                className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition"
+                                {result.recommendedDoctors.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {result.recommendedDoctors.map((doc, i) => (
+                                            <div
+                                                key={doc._id}
+                                                className={`flex items-center justify-between p-4 rounded-xl border transition hover:shadow-md ${i === 0
+                                                    ? "bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-indigo-200 dark:border-indigo-800"
+                                                    : "bg-slate-50 dark:bg-dark-700 border-slate-200 dark:border-dark-600"
+                                                    }`}
                                             >
-                                                {t.home.bookNow}
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-semibold text-slate-900 dark:text-white">
+                                                            Dr. {doc.full_name}
+                                                        </h3>
+                                                        {i === 0 && (
+                                                            <span className="px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                                                                ⭐ {t.ai.bestMatch}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                        {doc.specializations.join(", ")}
+                                                    </p>
+                                                    <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 dark:text-slate-400">
+                                                        <span className="flex items-center gap-1">
+                                                            💰 EGP {doc.consultation_fee}
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            📅 {doc.availableSlots} {t.doctors.slotsAvailable}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleBookDoctor(doc._id)}
+                                                    className="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition shadow-sm hover:shadow"
+                                                >
+                                                    {t.home.bookNow}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                                        <p>{language === "ar" ? "لم يتم العثور على أطباء مطابقين" : "No matching doctors found"}</p>
+                                        <Link href="/book" className="text-indigo-600 dark:text-indigo-400 hover:underline mt-2 inline-block">
+                                            {language === "ar" ? "تصفح جميع الأطباء" : "Browse all doctors"}
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -310,10 +433,11 @@ export default function SymptomCheckerPage() {
                                 setSymptoms("");
                                 setAge("");
                                 setGender("");
+                                setActiveTab("analysis");
                             }}
-                            className="w-full py-3 px-4 rounded-lg border-2 border-slate-300 dark:border-dark-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-dark-700 transition"
+                            className="w-full py-3 px-4 rounded-lg border-2 border-slate-300 dark:border-dark-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-dark-700 transition flex items-center justify-center gap-2"
                         >
-                            {t.ai.checkNewSymptoms}
+                            🔄 {t.ai.checkNewSymptoms}
                         </button>
                     </div>
                 )}
