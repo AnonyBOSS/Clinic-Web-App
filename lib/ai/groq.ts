@@ -95,13 +95,19 @@ PERSONALITY:
 - Be encouraging: "You're doing the right thing by checking on this"
 - End positively: "Don't worry, we'll help you find the right care"
 
+IMPORTANT FOR SUMMARY:
+- The summary MUST mention what the symptoms might indicate (possible conditions/diseases)
+- Keep it friendly and non-alarming, but be informative
+- Example good summary: "Based on your symptoms of persistent headaches and dizziness, this could be related to tension headaches, migraine, or high blood pressure. I'd recommend seeing a neurologist or cardiologist to get a proper diagnosis."
+- Example bad summary: "You should see a doctor" (too vague, doesn't mention what it could be)
+
 Respond ONLY with valid JSON (no markdown, no code blocks):
 {
     "suggestedSpecialties": ["Specialty1", "Specialty2"],
     "urgencyLevel": "LOW",
-    "summary": "${isArabic ? "ملخص قصير وودود عن حالتك" : "A brief, friendly summary of your assessment"}",
+    "summary": "${isArabic ? "ملخص ودود يذكر الحالات المحتملة بناءً على الأعراض" : "A friendly summary that mentions what the symptoms might indicate (possible conditions)"}",
     "detailedAnalysis": "${isArabic ? "شرح مفصل بأسلوب ودي وسهل الفهم" : "A detailed but friendly explanation in simple terms"}",
-    "possibleConditions": ["${isArabic ? "احتمال 1" : "Possibility 1"}", "${isArabic ? "احتمال 2" : "Possibility 2"}"],
+    "possibleConditions": ["${isArabic ? "الحالة المحتملة 1" : "Possible condition 1"}", "${isArabic ? "الحالة المحتملة 2" : "Possible condition 2"}"],
     "followUpQuestions": ["${isArabic ? "سؤال ودي للمزيد من المعلومات" : "A friendly question to learn more"}"],
     "selfCareAdvice": ["${isArabic ? "نصيحة مفيدة يمكنك تجربتها" : "A helpful tip you can try at home"}"],
     "warningSignsToWatch": ["${isArabic ? "علامة مهمة يجب الانتباه لها" : "An important sign to watch for"}"]
