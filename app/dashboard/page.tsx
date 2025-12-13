@@ -668,7 +668,7 @@ export default function DashboardPage() {
                   description={t.dashboard.bookNewAppointment}
                 />
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                   {pastAppointments.map((appt) => {
                     const counterpart =
                       user.role === "PATIENT" ? appt.doctor : appt.patient;
