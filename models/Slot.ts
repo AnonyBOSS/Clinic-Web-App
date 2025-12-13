@@ -33,5 +33,8 @@ SlotSchema.index(
   { unique: true }
 ); // no duplicate time slots for same doctor/room/clinic
 
+// Index for availability queries
+SlotSchema.index({ doctor: 1, date: 1, status: 1 });
+
 export const Slot: Model<ISlot> =
   mongoose.models.Slot || mongoose.model<ISlot>("Slot", SlotSchema);

@@ -22,6 +22,8 @@ const RoomSchema = new Schema<IRoom>(
 
 // Unique room number per clinic
 RoomSchema.index({ clinic: 1, room_number: 1 }, { unique: true });
+// Index for status-based queries
+RoomSchema.index({ status: 1 });
 
 export const Room: Model<IRoom> =
   mongoose.models.Room || mongoose.model<IRoom>("Room", RoomSchema);

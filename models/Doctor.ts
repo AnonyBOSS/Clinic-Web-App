@@ -69,6 +69,9 @@ const DoctorSchema = new Schema<IDoctor>(
   { timestamps: true }
 );
 
+// Index for specialization searches
+DoctorSchema.index({ specializations: 1 });
+
 DoctorSchema.pre("save", async function (next) {
   const doctor = this as IDoctor;
   // @ts-ignore
