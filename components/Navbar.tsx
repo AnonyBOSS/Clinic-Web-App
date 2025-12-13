@@ -207,6 +207,15 @@ export default function Navbar() {
                 {t.appointments.book}
               </Link>
             )}
+            {user?.role !== "DOCTOR" && (
+              <Link
+                href="/symptom-checker"
+                className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t.nav.aiCheck}
+              </Link>
+            )}
             {user?.role === "DOCTOR" && (
               <Link
                 href="/doctor/schedule"
@@ -214,6 +223,15 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {t.nav.schedule}
+              </Link>
+            )}
+            {user?.role === "DOCTOR" && (
+              <Link
+                href="/doctor/analytics"
+                className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t.nav.analytics}
               </Link>
             )}
             {user && (
