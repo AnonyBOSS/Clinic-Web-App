@@ -218,6 +218,15 @@ export default function Navbar() {
             )}
             {user && (
               <Link
+                href="/messages"
+                className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t.nav.messages}
+              </Link>
+            )}
+            {user && (
+              <Link
                 href="/profile"
                 className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
