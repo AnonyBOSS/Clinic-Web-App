@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import "./../styles/globals.css";
 import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { LanguageProvider } from "@/lib/i18n";
+import AIChatWidget from "@/components/AIChatWidget";
 import { ReactNode } from "react";
 
 export const metadata: Metadata = {
@@ -12,15 +14,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <body className="bg-slate-50 dark:bg-dark-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
-        <ThemeProvider>
-          <Navbar />
-          <main className="min-h-screen">
-            {children}
-          </main>
-        </ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider>
+            <Navbar />
+            <main className="min-h-screen">
+              {children}
+            </main>
+            <AIChatWidget />
+          </ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
 }
+

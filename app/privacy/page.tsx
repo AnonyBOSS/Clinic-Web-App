@@ -1,72 +1,77 @@
 // app/privacy/page.tsx
+"use client";
+
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
+import { useTranslation } from "@/lib/i18n";
 
 export default function PrivacyPage() {
+    const { t } = useTranslation();
+
     return (
         <PageShell
-            title="Privacy Policy"
-            description="How we handle and protect your data"
+            title={t.privacy.title}
+            description={t.privacy.description}
         >
             <Card className="max-w-4xl mx-auto prose prose-slate dark:prose-invert prose-sm">
                 <div className="space-y-6 text-sm text-slate-600 dark:text-slate-300">
                     <section>
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">1. Information We Collect</h2>
-                        <p>We collect information you provide directly to us, including:</p>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">{t.privacy.section1Title}</h2>
+                        <p>{t.privacy.section1Intro}</p>
                         <ul className="list-disc pl-5 mt-2 space-y-1">
-                            <li>Name, email address, and phone number when you create an account</li>
-                            <li>Appointment booking details and medical preferences</li>
-                            <li>Communication records when you contact us for support</li>
-                            <li>Payment information when you complete transactions</li>
+                            <li>{t.privacy.section1Item1}</li>
+                            <li>{t.privacy.section1Item2}</li>
+                            <li>{t.privacy.section1Item3}</li>
+                            <li>{t.privacy.section1Item4}</li>
                         </ul>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">2. How We Use Your Information</h2>
-                        <p>We use the information we collect to:</p>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">{t.privacy.section2Title}</h2>
+                        <p>{t.privacy.section2Intro}</p>
                         <ul className="list-disc pl-5 mt-2 space-y-1">
-                            <li>Provide, maintain, and improve our services</li>
-                            <li>Process appointments and payments</li>
-                            <li>Send you appointment reminders and updates</li>
-                            <li>Respond to your inquiries and provide customer support</li>
-                            <li>Protect against fraudulent or illegal activity</li>
+                            <li>{t.privacy.section2Item1}</li>
+                            <li>{t.privacy.section2Item2}</li>
+                            <li>{t.privacy.section2Item3}</li>
+                            <li>{t.privacy.section2Item4}</li>
+                            <li>{t.privacy.section2Item5}</li>
                         </ul>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">3. Information Sharing</h2>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">{t.privacy.section3Title}</h2>
                         <p>
-                            We do not sell your personal information. We may share your information with:
+                            {t.privacy.section3Intro}
                         </p>
                         <ul className="list-disc pl-5 mt-2 space-y-1">
-                            <li>Healthcare providers you book appointments with</li>
-                            <li>Service providers who assist in our operations</li>
-                            <li>Legal authorities when required by law</li>
+                            <li>{t.privacy.section3Item1}</li>
+                            <li>{t.privacy.section3Item2}</li>
+                            <li>{t.privacy.section3Item3}</li>
                         </ul>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">4. Data Security</h2>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">{t.privacy.section4Title}</h2>
                         <p>
-                            We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.
+                            {t.privacy.section4Text}
                         </p>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">5. Your Rights</h2>
-                        <p>You have the right to:</p>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">{t.privacy.section5Title}</h2>
+                        <p>{t.privacy.section5Intro}</p>
                         <ul className="list-disc pl-5 mt-2 space-y-1">
-                            <li>Access your personal data</li>
-                            <li>Correct inaccurate data</li>
-                            <li>Request deletion of your data</li>
-                            <li>Export your data</li>
+                            <li>{t.privacy.section5Item1}</li>
+                            <li>{t.privacy.section5Item2}</li>
+                            <li>{t.privacy.section5Item3}</li>
+                            <li>{t.privacy.section5Item4}</li>
                         </ul>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">6. Contact Us</h2>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">{t.privacy.section6Title}</h2>
                         <p>
-                            If you have any questions about this Privacy Policy, please contact us at{" "}
+                            {t.privacy.section6Text}{" "}
                             <a href="mailto:privacy@clinify.com" className="text-indigo-600 dark:text-indigo-400 hover:underline">
                                 privacy@clinify.com
                             </a>
@@ -74,7 +79,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <p className="text-xs text-slate-500 dark:text-slate-400 pt-4 border-t border-slate-200 dark:border-dark-700">
-                        Last updated: {new Date().toLocaleDateString()}
+                        {t.dateTime.lastUpdated}: {new Date().toLocaleDateString()}
                     </p>
                 </div>
             </Card>

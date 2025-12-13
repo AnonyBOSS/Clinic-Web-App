@@ -8,6 +8,7 @@ import Button from "@/components/Button";
 import Select from "@/components/Select";
 import Input from "@/components/Input";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useTranslation } from "@/lib/i18n";
 
 type Clinic = {
   _id: string;
@@ -35,6 +36,7 @@ type ScheduleRow = {
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function DoctorSchedulePage() {
+  const { t } = useTranslation();
   const [consultationFee, setConsultationFee] = useState("300");
   const [rows, setRows] = useState<ScheduleRow[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
@@ -250,8 +252,8 @@ export default function DoctorSchedulePage() {
   if (loading) {
     return (
       <PageShell
-        title="Doctor schedule"
-        description="Define your working days, rooms, and consultation fee."
+        title={t.schedule.title}
+        description={t.schedule.manageSlots}
       >
         <LoadingSpinner />
       </PageShell>
@@ -260,8 +262,8 @@ export default function DoctorSchedulePage() {
 
   return (
     <PageShell
-      title="Doctor schedule"
-      description="Define your working days, rooms, and consultation fee."
+      title={t.schedule.title}
+      description={t.schedule.manageSlots}
     >
       <div className="space-y-4">
         {error && (
@@ -278,7 +280,7 @@ export default function DoctorSchedulePage() {
         {/* Consultation fee */}
         <Card className="p-4 space-y-3">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Consultation fee
+            {t.schedule.consultationFee}
           </h2>
           <p className="text-xs text-slate-600 dark:text-slate-300">
             This fee will be used for all appointments booked with you. Patients
@@ -300,10 +302,10 @@ export default function DoctorSchedulePage() {
         <Card className="p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Weekly schedule
+              {t.schedule.title}
             </h2>
             <Button size="sm" variant="outline" onClick={addRow}>
-              Add row
+              {t.schedule.addRow}
             </Button>
           </div>
 
@@ -326,7 +328,7 @@ export default function DoctorSchedulePage() {
                     {/* Day */}
                     <div className="space-y-1">
                       <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                        Day
+                        {t.schedule.day}
                       </label>
                       <Select
                         value={row.dayOfWeek}
@@ -345,7 +347,7 @@ export default function DoctorSchedulePage() {
                     {/* Clinic */}
                     <div className="space-y-1">
                       <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                        Clinic
+                        {t.appointments.clinic}
                       </label>
                       <Select
                         value={row.clinicId}
@@ -356,7 +358,7 @@ export default function DoctorSchedulePage() {
                           })
                         }
                       >
-                        <option value="">Select clinic</option>
+                        <option value="">{t.common.select}</option>
                         {clinics.map((c) => (
                           <option key={c._id} value={c._id}>
                             {c.name}
@@ -369,7 +371,7 @@ export default function DoctorSchedulePage() {
                     {/* Room */}
                     <div className="space-y-1">
                       <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                        Room
+                        {t.appointments.room}
                       </label>
                       <Select
                         value={row.roomId ?? ""}
@@ -379,10 +381,10 @@ export default function DoctorSchedulePage() {
                           })
                         }
                       >
-                        <option value="">Any room</option>
+                        <option value="">{t.common.select}</option>
                         {clinicRooms.map((r) => (
                           <option key={r._id} value={r._id}>
-                            Room {r.room_number}
+                            {t.appointments.room} {r.room_number}
                           </option>
                         ))}
                       </Select>
@@ -391,7 +393,7 @@ export default function DoctorSchedulePage() {
                     {/* Time range */}
                     <div className="space-y-1">
                       <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                        From
+                        {t.schedule.startTime}
                       </label>
                       <Input
                         type="time"
@@ -403,7 +405,7 @@ export default function DoctorSchedulePage() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                        To
+                        {t.schedule.endTime}
                       </label>
                       <Input
                         type="time"
@@ -438,7 +440,7 @@ export default function DoctorSchedulePage() {
                               updateRow(i, { isActive: e.target.checked })
                             }
                           />
-                          Active
+                          {t.schedule.active}
                         </label>
                         <Button
                           size="sm"
@@ -457,7 +459,7 @@ export default function DoctorSchedulePage() {
 
           <div className="pt-2 border-t border-slate-100 dark:border-dark-700 flex justify-end gap-3">
             <Button size="sm" isLoading={saving} onClick={handleSave}>
-              Save schedule
+              {t.schedule.saveSchedule}
             </Button>
             <Button
               size="sm"
@@ -466,7 +468,7 @@ export default function DoctorSchedulePage() {
               onClick={handleGenerateSlots}
               disabled={rows.length === 0}
             >
-              Generate Slots (2 weeks)
+              {t.schedule.generateSlotsFor2Weeks}
             </Button>
           </div>
 

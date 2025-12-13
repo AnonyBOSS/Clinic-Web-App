@@ -9,6 +9,8 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
+import RatingModal from "@/components/RatingModal";
+import { useTranslation } from "@/lib/i18n";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -132,6 +134,7 @@ function counterpartLabel(userRole: Role) {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,6 +147,10 @@ export default function DashboardPage() {
   const [selectedNewSlotId, setSelectedNewSlotId] = useState<string | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
+
+  // Rating state
+  const [ratingModalAppt, setRatingModalAppt] = useState<AppointmentItem | null>(null);
+  const [ratedAppointments, setRatedAppointments] = useState<Set<string>>(new Set());
 
   useEffect(() => {
 
@@ -180,6 +187,25 @@ export default function DashboardPage() {
           });
 
           setAppointments(sorted);
+
+          // Fetch existing ratings to mark already-rated appointments
+          if (me.role === "PATIENT") {
+            try {
+              const ratingsRes = await fetch("/api/ratings?myRatings=true", {
+                credentials: "include"
+              });
+              if (ratingsRes.ok) {
+                const ratingsJson = await ratingsRes.json();
+                const ratings = ratingsJson.data || [];
+                const ratedIds = new Set<string>(
+                  ratings.map((r: any) => r.appointment?._id || r.appointment).filter(Boolean)
+                );
+                setRatedAppointments(ratedIds);
+              }
+            } catch {
+              // Ignore ratings fetch error
+            }
+          }
         } else {
           setAppointments([]);
         }
@@ -357,7 +383,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <PageShell title="Dashboard">
+      <PageShell title={t.nav.dashboard}>
         <LoadingSpinner />
       </PageShell>
     );
@@ -366,8 +392,8 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <PageShell
-        title="Dashboard"
-        description="You need to sign in to access your appointments."
+        title={t.nav.dashboard}
+        description={t.errors.unauthorized}
       >
         {error && <p className="text-sm text-red-600">{error}</p>}
       </PageShell>
@@ -382,8 +408,8 @@ export default function DashboardPage() {
 
   return (
     <PageShell
-      title={`Welcome back, ${user.full_name}`}
-      description={`You are signed in as ${roleLabel.toLowerCase()}.`}
+      title={`${t.common.welcomeBack}, ${user.full_name}`}
+      description={roleLabel}
     >
       <div className="space-y-4">
         {error && (
@@ -396,7 +422,7 @@ export default function DashboardPage() {
         <div className="grid gap-3 sm:grid-cols-3">
           <Card className="px-4 py-3">
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              Today&apos;s appointments
+              {t.dashboard.todayAppointments}
             </p>
             <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
               {todaysAppointments.length}
@@ -404,7 +430,7 @@ export default function DashboardPage() {
           </Card>
           <Card className="px-4 py-3">
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              Upcoming appointments
+              {t.dashboard.upcomingAppointments}
             </p>
             <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
               {totalUpcoming}
@@ -412,7 +438,7 @@ export default function DashboardPage() {
           </Card>
           <Card className="px-4 py-3">
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              Past & completed
+              {t.dashboard.pastAppointments}
             </p>
             <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
               {totalPast}
@@ -428,18 +454,18 @@ export default function DashboardPage() {
             <section className="space-y-2">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Today&apos;s appointments
+                  {t.dashboard.todayAppointments}
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {isPatient && (
                     <Link href="/book">
-                      <Button size="sm">Book an appointment</Button>
+                      <Button size="sm">{t.appointments.book}</Button>
                     </Link>
                   )}
                   {!isPatient && (
                     <Link href="/doctor/schedule">
                       <Button size="sm" variant="outline">
-                        Manage schedule
+                        {t.nav.schedule}
                       </Button>
                     </Link>
                   )}
@@ -447,11 +473,11 @@ export default function DashboardPage() {
               </div>
               {todaysAppointments.length === 0 ? (
                 <EmptyState
-                  title="No appointments today"
+                  title={t.dashboard.noAppointmentsToday}
                   description={
                     isPatient
-                      ? "Book a new appointment to get started."
-                      : "You have no scheduled visits for today."
+                      ? t.dashboard.bookNewAppointment
+                      : t.dashboard.noScheduledVisits
                   }
                 />
               ) : (
@@ -484,11 +510,11 @@ export default function DashboardPage() {
                             <span className="font-medium">
                               {counterpartLabel(user.role)}:
                             </span>{" "}
-                            {counterpart?.full_name ?? "N/A"}
+                            {counterpart?.full_name ?? t.common.notAvailable}
                           </p>
                           {appt.clinic && (
                             <p className="text-slate-600 dark:text-slate-400">
-                              <span className="font-medium">Clinic:</span>{" "}
+                              <span className="font-medium">{t.appointments.clinic}:</span>{" "}
                               {appt.clinic.name}
                               {appt.clinic.address?.city
                                 ? ` – ${appt.clinic.address.city}`
@@ -497,7 +523,7 @@ export default function DashboardPage() {
                           )}
                           {appt.room && (
                             <p className="text-slate-600 dark:text-slate-400">
-                              <span className="font-medium">Room:</span>{" "}
+                              <span className="font-medium">{t.appointments.room}:</span>{" "}
                               {appt.room.room_number}
                             </p>
                           )}
@@ -522,7 +548,7 @@ export default function DashboardPage() {
                               onClick={() => handleCancel(appt._id)}
                               isLoading={cancelLoadingId === appt._id}
                             >
-                              Cancel
+                              {t.common.cancel}
                             </Button>
                           )}
                         </div>
@@ -536,15 +562,15 @@ export default function DashboardPage() {
             {/* Upcoming */}
             <section className="space-y-2">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Upcoming appointments
+                {t.dashboard.upcomingAppointments}
               </h2>
               {upcomingAppointments.length === 0 ? (
                 <EmptyState
-                  title="No upcoming appointments"
+                  title={t.dashboard.noUpcoming}
                   description={
                     isPatient
-                      ? "You don’t have any future bookings yet."
-                      : "No upcoming visits scheduled."
+                      ? t.dashboard.noFutureBookings
+                      : t.dashboard.noUpcomingVisits
                   }
                 />
               ) : (
@@ -578,7 +604,7 @@ export default function DashboardPage() {
                             <span className="font-medium">
                               {counterpartLabel(user.role)}:
                             </span>{" "}
-                            {counterpart?.full_name ?? "N/A"}
+                            {counterpart?.full_name ?? t.common.notAvailable}
                           </p>
                           {appt.clinic && (
                             <p className="text-slate-600 dark:text-slate-400">
@@ -609,7 +635,7 @@ export default function DashboardPage() {
                               variant="secondary"
                               onClick={() => openRescheduleModal(appt)}
                             >
-                              Reschedule
+                              {t.appointments.reschedule}
                             </Button>
                           )}
 
@@ -620,7 +646,7 @@ export default function DashboardPage() {
                               onClick={() => handleCancel(appt._id)}
                               isLoading={cancelLoadingId === appt._id}
                             >
-                              Cancel
+                              {t.common.cancel}
                             </Button>
                           )}
                         </div>
@@ -634,12 +660,12 @@ export default function DashboardPage() {
             {/* Past */}
             <section className="space-y-2">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Past & completed
+                {t.dashboard.pastAppointments}
               </h2>
               {pastAppointments.length === 0 ? (
                 <EmptyState
-                  title="No past appointments"
-                  description="Once you complete visits, they will appear here."
+                  title={t.dashboard.noAppointments}
+                  description={t.dashboard.bookNewAppointment}
                 />
               ) : (
                 <div className="space-y-2">
@@ -670,11 +696,11 @@ export default function DashboardPage() {
                             <span className="font-medium">
                               {counterpartLabel(user.role)}:
                             </span>{" "}
-                            {counterpart?.full_name ?? "N/A"}
+                            {counterpart?.full_name ?? t.common.notAvailable}
                           </p>
                           {appt.clinic && (
                             <p className="text-slate-600 dark:text-slate-400">
-                              <span className="font-medium">Clinic:</span>{" "}
+                              <span className="font-medium">{t.appointments.clinic}:</span>{" "}
                               {appt.clinic.name}
                               {appt.clinic.address?.city
                                 ? ` – ${appt.clinic.address.city}`
@@ -683,26 +709,48 @@ export default function DashboardPage() {
                           )}
                           {appt.notes && (
                             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                              Notes: {appt.notes}
+                              {t.appointments.notes}: {appt.notes}
                             </p>
                           )}
                         </div>
 
-                        {isPatient && appt.payment && (
-                          <div className="text-right text-[11px] text-slate-600 dark:text-slate-400">
-                            <div className="font-semibold text-slate-800 dark:text-slate-200">
-                              {appt.payment.amount} EGP
+                        <div className="flex items-center gap-2">
+                          {isPatient && appt.payment && (
+                            <div className="text-right text-[11px] text-slate-600 dark:text-slate-400">
+                              <div className="font-semibold text-slate-800 dark:text-slate-200">
+                                {appt.payment.amount} EGP
+                              </div>
+                              <div className="capitalize">
+                                {appt.payment.method.toLowerCase()}
+                              </div>
+                              <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                {new Date(
+                                  appt.payment.timestamp
+                                ).toLocaleString()}
+                              </div>
                             </div>
-                            <div className="capitalize">
-                              {appt.payment.method.toLowerCase()}
-                            </div>
-                            <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-                              {new Date(
-                                appt.payment.timestamp
-                              ).toLocaleString()}
-                            </div>
-                          </div>
-                        )}
+                          )}
+
+                          {/* Rate button for completed appointments */}
+                          {isPatient && appt.status === "COMPLETED" && appt.doctor && !ratedAppointments.has(appt._id) && (
+                            <Button
+                              size="sm"
+                              variant="gradient"
+                              onClick={() => setRatingModalAppt(appt)}
+                              className="shadow-md"
+                            >
+                              ⭐ {t.ratings.rate}
+                            </Button>
+                          )}
+                          {ratedAppointments.has(appt._id) && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              {t.ratings.rated}
+                            </span>
+                          )}
+                        </div>
                       </Card>
                     );
                   })}
@@ -714,23 +762,23 @@ export default function DashboardPage() {
           {/* RIGHT: profile summary */}
           <Card className="space-y-4">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Profile summary
+              {t.dashboard.profileSummary}
             </h2>
             <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
               <p>
-                <span className="font-medium text-slate-800 dark:text-slate-200">Full name:</span>{" "}
+                <span className="font-medium text-slate-800 dark:text-slate-200">{t.dashboard.fullNameLabel}</span>{" "}
                 {user.full_name}
               </p>
               <p>
-                <span className="font-medium text-slate-800 dark:text-slate-200">Email:</span>{" "}
+                <span className="font-medium text-slate-800 dark:text-slate-200">{t.dashboard.emailLabel}</span>{" "}
                 {user.email}
               </p>
               <p>
-                <span className="font-medium text-slate-800 dark:text-slate-200">Phone:</span>{" "}
+                <span className="font-medium text-slate-800 dark:text-slate-200">{t.dashboard.phoneLabel}</span>{" "}
                 {user.phone}
               </p>
               <p>
-                <span className="font-medium text-slate-800 dark:text-slate-200">Role:</span>{" "}
+                <span className="font-medium text-slate-800 dark:text-slate-200">{t.dashboard.roleLabel}</span>{" "}
                 {roleLabel}
               </p>
 
@@ -739,7 +787,7 @@ export default function DashboardPage() {
                   {user.qualifications && (
                     <p>
                       <span className="font-medium text-slate-800 dark:text-slate-200">
-                        Qualifications:
+                        {t.dashboard.qualificationsLabel}
                       </span>{" "}
                       {user.qualifications}
                     </p>
@@ -747,7 +795,7 @@ export default function DashboardPage() {
                   {user.specializations && user.specializations.length > 0 && (
                     <p>
                       <span className="font-medium text-slate-800 dark:text-slate-200">
-                        Specializations:
+                        {t.dashboard.specializationsLabel}
                       </span>{" "}
                       {user.specializations.join(", ")}
                     </p>
@@ -760,23 +808,19 @@ export default function DashboardPage() {
               {isPatient ? (
                 <>
                   <p>
-                    • You can book, view, and cancel appointments directly from
-                    this dashboard.
+                    • {t.dashboard.patientTip1}
                   </p>
                   <p>
-                    • Keep your phone and email up to date for reminders and
-                    clinic contact.
+                    • {t.dashboard.patientTip2}
                   </p>
                 </>
               ) : (
                 <>
                   <p>
-                    • Use the schedule page to define working days and generate
-                    slots.
+                    • {t.dashboard.doctorTip1}
                   </p>
                   <p>
-                    • Your dashboard aggregates patient bookings across all
-                    clinics.
+                    • {t.dashboard.doctorTip2}
                   </p>
                 </>
               )}
@@ -790,7 +834,7 @@ export default function DashboardPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="max-w-lg w-full mx-4 p-6 space-y-4 max-h-[80vh] overflow-y-auto">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Reschedule Appointment
+              {t.appointments.reschedule}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-300">
               Select a new time slot with Dr. {rescheduleModalAppt.doctor?.full_name}.
@@ -811,8 +855,8 @@ export default function DashboardPage() {
                   <label
                     key={slot._id}
                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedNewSlotId === slot._id
-                        ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                        : "border-slate-200 dark:border-dark-600 hover:bg-slate-50 dark:hover:bg-dark-700"
+                      ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                      : "border-slate-200 dark:border-dark-600 hover:bg-slate-50 dark:hover:bg-dark-700"
                       }`}
                   >
                     <input
@@ -853,7 +897,7 @@ export default function DashboardPage() {
                 }}
                 disabled={rescheduling}
               >
-                Cancel
+                {t.common.cancel}
               </Button>
               <Button
                 size="sm"
@@ -861,12 +905,25 @@ export default function DashboardPage() {
                 disabled={!selectedNewSlotId || rescheduling}
                 isLoading={rescheduling}
               >
-                Confirm Reschedule
+                {t.common.confirm}
               </Button>
             </div>
           </Card>
         </div>
       )}
+
+      {/* Rating Modal */}
+      <RatingModal
+        isOpen={!!ratingModalAppt}
+        onClose={() => setRatingModalAppt(null)}
+        doctorName={ratingModalAppt?.doctor?.full_name || ""}
+        appointmentId={ratingModalAppt?._id || ""}
+        onSuccess={() => {
+          if (ratingModalAppt) {
+            setRatedAppointments(prev => new Set([...prev, ratingModalAppt._id]));
+          }
+        }}
+      />
     </PageShell>
   );
 }

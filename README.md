@@ -6,22 +6,34 @@ A full-stack clinic appointment booking platform built with **Next.js 14+ (App R
 
 ### For Patients
 - 📅 **Search & Book Appointments** — Browse available doctors, filter by specialization, and book slots in real-time
-- � **Payment at Booking** — Cash or card payment recorded during booking
+- 🤖 **AI Symptom Checker** — Describe symptoms and get AI-powered specialist recommendations
+- 💬 **AI Medical Assistant** — Chat with an AI assistant for general health questions
+- 🗨️ **Doctor Messaging** — Send messages directly to your doctors
+- 🔔 **Notifications** — Get notified about appointments, messages, and updates
+- ⭐ **Rate Doctors** — Leave ratings and reviews after completed appointments
+- 💳 **Payment at Booking** — Cash or card payment recorded during booking
 - 📊 **Dashboard** — View today's, upcoming, and past appointments
 - ❌ **Cancel Appointments** — Cancel future bookings directly from the dashboard
 - 👤 **Profile Management** — Update personal details and change password
 
 ### For Doctors
-- �️ **Schedule Management** — Define working days, hours, and slot durations per clinic/room
+- 🗓️ **Schedule Management** — Define working days, hours, and slot durations per clinic/room
 - ⚙️ **Auto Slot Generation** — Generate booking slots based on schedule configuration
+- 🗨️ **Patient Messaging** — Communicate with patients through in-app chat
+- 🔔 **Notifications** — Get notified about new bookings and messages
 - 📊 **Dashboard** — View assigned appointments across all clinics
 - 👤 **Profile Management** — Update qualifications and specializations
 
 ### System Features
 - 🔐 **Unified Authentication** — Single login/register page with role selection (Patient/Doctor)
 - 🌗 **Dark Mode** — System-wide dark mode toggle
+- 🌍 **Internationalization (i18n)** — Full English and Arabic language support with RTL layout
+- 🤖 **AI Symptom Checker** — Groq-powered AI that analyzes symptoms and suggests specialists
+- 💬 **Real-time Messaging** — Doctor-patient chat system with notifications
+- 🔔 **Notifications** — In-app notification system for appointments and messages
+- ⭐ **Doctor Ratings** — Patients can rate and review doctors after appointments
 - ⚛️ **Atomic Booking** — Race-condition-safe slot reservation using MongoDB atomic updates
-- 🧩 **Reusable Components** — Button, Card, Input, Select, LoadingSpinner, EmptyState, etc.
+- 🧩 **Reusable Components** — Button, Card, Input, Select, LoadingSpinner, etc.
 
 ---
 
@@ -35,6 +47,8 @@ A full-stack clinic appointment booking platform built with **Next.js 14+ (App R
 | **Database** | MongoDB with Mongoose ODM |
 | **Auth** | JWT (httpOnly cookies, 30-day expiry) |
 | **Password Hashing** | bcryptjs |
+| **AI** | Groq SDK (Llama 3.3 70B) |
+| **i18n** | Custom React Context with RTL support |
 
 ---
 
@@ -47,18 +61,28 @@ A full-stack clinic appointment booking platform built with **Next.js 14+ (App R
 │   │   └── register/            # Unified registration
 │   ├── api/
 │   │   ├── auth/                # login, register, me, logout
-│   │   ├── appointments/        # GET (list), POST (book), [id]/cancel
+│   │   ├── appointments/        # GET (list), POST (book), [id]/cancel, confirm, complete
 │   │   ├── doctors/             # GET, [id], search, schedule, slots
 │   │   ├── clinics/             # GET, POST
 │   │   ├── slots/available/     # GET available slots
 │   │   ├── payments/            # POST/GET payment records
-│   │   └── profile/             # PUT profile updates
+│   │   ├── profile/             # PUT profile updates
+│   │   ├── messages/            # Doctor-patient messaging
+│   │   ├── notifications/       # In-app notifications
+│   │   ├── ratings/             # Doctor ratings and reviews
+│   │   ├── analytics/           # Dashboard analytics
+│   │   └── ai/                  # AI features
+│   │       ├── symptom-check/   # Symptom analysis
+│   │       ├── chat/            # AI medical assistant
+│   │       └── recommend-doctors/ # Doctor recommendations
 │   ├── book/                    # Booking flow page
 │   ├── dashboard/               # Unified dashboard (Patient & Doctor)
 │   ├── doctor/schedule/         # Doctor schedule management
+│   ├── messages/                # Chat interface
+│   ├── symptom-checker/         # AI symptom checker page
 │   ├── profile/                 # Profile settings page
 │   ├── contact/, help/, privacy/, terms/  # Static pages
-│   ├── layout.tsx               # Root layout with ThemeProvider
+│   ├── layout.tsx               # Root layout with providers
 │   └── page.tsx                 # Landing page
 ├── components/
 │   ├── Button.tsx               # Primary button component
@@ -75,7 +99,12 @@ A full-stack clinic appointment booking platform built with **Next.js 14+ (App R
 │   ├── auth.ts                  # JWT generation/verification
 │   ├── auth-request.ts          # Extract user from request
 │   ├── validators.ts            # Email/password validation
-│   └── db/connection.ts         # MongoDB connection
+│   ├── db/connection.ts         # MongoDB connection
+│   ├── ai/groq.ts               # Groq AI integration for symptom analysis
+│   └── i18n/                    # Internationalization
+│       ├── translations.ts      # English & Arabic translations
+│       ├── LanguageContext.tsx  # Language provider & hooks
+│       └── index.ts             # Public exports
 ├── models/
 │   ├── Patient.ts               # Patient schema (insurance, emergency contact)
 │   ├── Doctor.ts                # Doctor schema (schedule_days, consultation_fee)
@@ -83,7 +112,11 @@ A full-stack clinic appointment booking platform built with **Next.js 14+ (App R
 │   ├── Room.ts                  # Room schema (type, status)
 │   ├── Slot.ts                  # Slot schema (date, time, status)
 │   ├── Appointment.ts           # Appointment with embedded payment
-│   └── Payment.ts               # Standalone payment record
+│   ├── Payment.ts               # Standalone payment record
+│   ├── Message.ts               # Doctor-patient messages
+│   ├── Notification.ts          # In-app notifications
+│   ├── DoctorRating.ts          # Doctor ratings and reviews
+│   └── SymptomCheck.ts          # AI symptom check history
 └── styles/
     └── globals.css              # Tailwind imports + custom styles
 ```
@@ -164,6 +197,35 @@ A full-stack clinic appointment booking platform built with **Next.js 14+ (App R
 |--------|----------|-------------|
 | PUT | `/api/profile` | Update profile + password |
 
+### Messages
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/messages` | Get conversations list |
+| GET | `/api/messages/[recipientId]` | Get messages with specific user |
+| POST | `/api/messages` | Send a message |
+
+### Notifications
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/notifications` | Get user notifications |
+| PUT | `/api/notifications` | Mark notifications as read |
+
+### Ratings
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/ratings` | Get user's ratings |
+| POST | `/api/ratings` | Submit a doctor rating |
+| PUT | `/api/ratings` | Update a rating |
+| DELETE | `/api/ratings` | Delete a rating |
+
+### AI Features
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/ai/symptom-check` | Analyze symptoms and suggest specialists |
+| GET | `/api/ai/symptom-check` | Get symptom check history |
+| POST | `/api/ai/chat` | Chat with AI medical assistant |
+| POST | `/api/ai/recommend-doctors` | Get doctor recommendations |
+
 ---
 
 ## 🚀 Getting Started
@@ -187,6 +249,7 @@ cat > .env.local << EOF
 MONGODB_URI=mongodb://localhost:27017/clinics-booking
 JWT_SECRET=your-super-secret-key-change-in-production
 NEXT_PUBLIC_API_URL=http://localhost:3000
+GROQ_API_KEY=your-groq-api-key
 EOF
 
 # 4. Run development server
@@ -194,6 +257,50 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🌍 Internationalization (i18n)
+
+The application supports **English** and **Arabic** with full RTL (Right-to-Left) layout support.
+
+### Features
+- 🔄 **Language Toggle** — Switch languages from the navbar (persisted in localStorage)
+- ↔️ **RTL Support** — Automatic layout direction change for Arabic
+- 🤖 **AI in Arabic** — The AI symptom checker responds in the user's selected language
+- 📝 **Comprehensive Coverage** — All UI text, buttons, labels, and messages are translated
+
+### Usage in Components
+
+```tsx
+import { useTranslation } from "@/lib/i18n";
+
+export default function MyComponent() {
+    const { t, language, isRTL } = useTranslation();
+    
+    return (
+        <div>
+            <h1>{t.common.loading}</h1>
+            <p>Current language: {language}</p>
+        </div>
+    );
+}
+```
+
+### Adding New Translations
+
+Edit `lib/i18n/translations.ts` and add keys to both `en` and `ar` objects:
+
+```typescript
+// English
+common: {
+    newKey: "English text",
+},
+// Arabic  
+common: {
+    newKey: "النص العربي",
+},
+```
 
 ---
 

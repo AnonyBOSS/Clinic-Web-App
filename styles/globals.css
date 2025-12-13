@@ -587,3 +587,147 @@ html.dark input[type="time"],
 html.dark input[type="date"] {
   color-scheme: dark;
 }
+
+/* ============================
+   RTL (Right-to-Left) SUPPORT
+   ============================ */
+
+/* Base RTL adjustments */
+html.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Flip flex direction for RTL */
+html.rtl .flex-row {
+  flex-direction: row-reverse;
+}
+
+/* Flip margins and paddings */
+html.rtl .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+html.rtl .mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+/* Flip text alignment */
+html.rtl .text-left {
+  text-align: right;
+}
+
+html.rtl .text-right {
+  text-align: left;
+}
+
+/* Flip border radius for RTL */
+html.rtl .rounded-l-lg {
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+html.rtl .rounded-r-lg {
+  border-radius: 0.5rem 0 0 0.5rem;
+}
+
+/* Flip icons and arrows */
+html.rtl .rotate-180-rtl {
+  transform: rotate(180deg);
+}
+
+/* Navbar RTL adjustments */
+html.rtl nav {
+  flex-direction: row-reverse;
+}
+
+/* Card RTL adjustments */
+html.rtl .card {
+  text-align: right;
+}
+
+/* Form inputs RTL */
+html.rtl input,
+html.rtl textarea,
+html.rtl select {
+  text-align: right;
+}
+
+html.rtl input::placeholder,
+html.rtl textarea::placeholder {
+  text-align: right;
+}
+
+/* Button icons for RTL */
+html.rtl .btn-icon-left {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+html.rtl .btn-icon-right {
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+/* Sidebar/Navigation RTL */
+html.rtl .sidebar {
+  right: 0;
+  left: auto;
+}
+
+/* Table RTL */
+html.rtl table {
+  direction: rtl;
+}
+
+html.rtl th,
+html.rtl td {
+  text-align: right;
+}
+
+/* List items RTL */
+html.rtl ul,
+html.rtl ol {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+/* Dropdown menus RTL */
+html.rtl .dropdown {
+  right: 0;
+  left: auto;
+}
+
+/* Modal RTL */
+html.rtl .modal-close {
+  right: auto;
+  left: 1rem;
+}
+
+/* Arabic-specific font adjustments */
+html.rtl {
+  font-family: 'Segoe UI', 'Arabic Typesetting', 'Tahoma', sans-serif;
+}
+
+/* Better Arabic text rendering */
+html.rtl body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fix for star ratings in RTL */
+html.rtl .star-rating {
+  direction: ltr;
+  display: inline-flex;
+}
+
+/* Fix for progress bars in RTL */
+html.rtl .progress-bar {
+  direction: ltr;
+}
+
+/* Fix charts direction */
+html.rtl .recharts-wrapper {
+  direction: ltr;
+}

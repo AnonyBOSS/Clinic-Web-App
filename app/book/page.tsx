@@ -2,7 +2,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import PageShell from "@/components/PageShell";
 import Card from "@/components/Card";
@@ -11,6 +11,7 @@ import Input from "@/components/Input";
 import Button from "@/components/Button";
 import EmptyState from "@/components/EmptyState";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useTranslation } from "@/lib/i18n";
 
 type Clinic = {
   _id: string;
@@ -62,6 +63,9 @@ type SlotItem = {
 
 export default function BookPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { t } = useTranslation();
+  const preselectedDoctorId = searchParams.get("doctorId");
 
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -111,6 +115,16 @@ export default function BookPage() {
         if (doctorsRes.ok) {
           const doctorsJson = await doctorsRes.json();
           setDoctors(doctorsJson.data as Doctor[]);
+
+          // Pre-select doctor if doctorId is in URL (from symptom checker)
+          if (preselectedDoctorId) {
+            const doctorExists = (doctorsJson.data as Doctor[]).some(
+              d => d._id === preselectedDoctorId
+            );
+            if (doctorExists) {
+              setSelectedDoctorId(preselectedDoctorId);
+            }
+          }
         }
       } catch {
         setError("Failed to load clinics/doctors.");
@@ -120,7 +134,7 @@ export default function BookPage() {
     }
 
     load();
-  }, [router]);
+  }, [router, preselectedDoctorId]);
 
   async function fetchSlots(args?: {
     doctorId?: string;
@@ -224,8 +238,8 @@ export default function BookPage() {
   if (loadingInitial) {
     return (
       <PageShell
-        title="Book an appointment"
-        description="Choose clinic, doctor, and date to find available slots."
+        title={t.appointments.book}
+        description={t.appointments.selectDoctor}
       >
         <LoadingSpinner />
       </PageShell>
@@ -234,8 +248,8 @@ export default function BookPage() {
 
   return (
     <PageShell
-      title="Book an appointment"
-      description="Choose a clinic, doctor, and time slot to schedule your visit."
+      title={t.appointments.book}
+      description={t.appointments.selectDoctor}
     >
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: selection form & slots */}
@@ -245,13 +259,13 @@ export default function BookPage() {
               {/* Clinic */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Clinic
+                  {t.appointments.clinic}
                 </label>
                 <Select
                   value={selectedClinicId}
                   onChange={(e) => setSelectedClinicId(e.target.value)}
                 >
-                  <option value="">Any clinic</option>
+                  <option value="">{t.appointments.anyClinic}</option>
                   {clinics.map((c) => (
                     <option key={c._id} value={c._id}>
                       {c.name} – {c.address.city}
@@ -263,13 +277,13 @@ export default function BookPage() {
               {/* Doctor */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Doctor
+                  {t.common.doctor}
                 </label>
                 <Select
                   value={selectedDoctorId}
                   onChange={(e) => setSelectedDoctorId(e.target.value)}
                 >
-                  <option value="">Any doctor</option>
+                  <option value="">{t.appointments.anyDoctor}</option>
                   {doctors.map((d) => (
                     <option key={d._id} value={d._id}>
                       {d.full_name}
@@ -284,7 +298,7 @@ export default function BookPage() {
               {/* Date */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Date (optional)
+                  {t.appointments.date} ({t.common.optional})
                 </label>
                 <Input
                   type="date"
@@ -296,7 +310,7 @@ export default function BookPage() {
 
             <div className="flex items-center gap-3 flex-wrap">
               <Button type="submit" isLoading={loadingSlots}>
-                Refresh slots
+                {t.common.search}
               </Button>
               {(selectedClinicId || selectedDoctorId || date) && (
                 <button
@@ -321,14 +335,14 @@ export default function BookPage() {
           {/* Slots list */}
           <div className="mt-4 space-y-3">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Available slots
+              {t.doctors.availableSlots}
             </h2>
             {loadingSlots ? (
               <LoadingSpinner />
             ) : slots.length === 0 ? (
               <EmptyState
-                title="No available slots"
-                description="Try another date, doctor, or clinic."
+                title={t.appointments.noSlotsAvailable}
+                description={t.appointments.tryDifferentFilters}
               />
             ) : (
               <div className="grid gap-2 sm:grid-cols-3">
@@ -368,7 +382,7 @@ export default function BookPage() {
                         {clinicLabel}
                       </span>
                       <span className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                        Room {slot.room.room_number}
+                        {t.appointments.room} {slot.room.room_number}
                         {doctorLabel ? ` · ${doctorLabel}` : ""}
                       </span>
                     </button>
@@ -382,35 +396,35 @@ export default function BookPage() {
         {/* Right: summary & continue */}
         <Card className="space-y-4">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Appointment summary
+            {t.appointments.selectedSlot}
           </h2>
           <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
             <p>
-              <span className="font-medium text-slate-800 dark:text-slate-200">Clinic:</span>{" "}
-              {selectedClinic ? selectedClinic.name : "Any clinic"}
+              <span className="font-medium text-slate-800 dark:text-slate-200">{t.appointments.clinic}:</span>{" "}
+              {selectedClinic ? selectedClinic.name : t.appointments.anyClinic}
             </p>
             <p>
-              <span className="font-medium text-slate-800 dark:text-slate-200">Doctor:</span>{" "}
-              {selectedDoctor ? selectedDoctor.full_name : "Any doctor"}
+              <span className="font-medium text-slate-800 dark:text-slate-200">{t.common.doctor}:</span>{" "}
+              {selectedDoctor ? selectedDoctor.full_name : t.appointments.selectDoctor}
             </p>
             <p>
-              <span className="font-medium text-slate-800 dark:text-slate-200">Date filter:</span>{" "}
-              {date || "Any upcoming date"}
+              <span className="font-medium text-slate-800 dark:text-slate-200">{t.appointments.date}:</span>{" "}
+              {date || t.dateTime.noDate}
             </p>
             <p>
-              <span className="font-medium text-slate-800 dark:text-slate-200">Selected time:</span>{" "}
+              <span className="font-medium text-slate-800 dark:text-slate-200">{t.appointments.selectTime}:</span>{" "}
               {selectedSlotId
                 ? slots.find((s) => s._id === selectedSlotId)?.time ??
-                "Selected"
-                : "Not selected"}
+                t.common.select
+                : t.appointments.noSlotSelected}
             </p>
             <p>
               <span className="font-medium text-slate-800 dark:text-slate-200">
-                Consultation fee:
+                {t.doctors.consultationFee}:
               </span>{" "}
               {selectedDoctor?.consultation_fee
                 ? `${selectedDoctor.consultation_fee} EGP`
-                : "Set by doctor"}
+                : "-"}
             </p>
           </div>
 
@@ -420,7 +434,7 @@ export default function BookPage() {
             disabled={!selectedSlotId}
             onClick={goToConfirm}
           >
-            Continue to payment
+            {t.appointments.continue}
           </Button>
         </Card>
       </div>
