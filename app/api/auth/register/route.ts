@@ -9,7 +9,6 @@ import {
   validatePassword,
   nonEmptyString,
   validatePhone,
-  validateSpecializations,
 } from "@/lib/validators";
 
 type RegisterBody = {
@@ -82,16 +81,6 @@ export async function POST(req: NextRequest) {
         { success: false, error: "Email already in use." },
         { status: 409 }
       );
-    }
-
-    // Validate specializations for doctors
-    if (role === "DOCTOR" && specializations.length > 0) {
-      if (!validateSpecializations(specializations)) {
-        return NextResponse.json(
-          { success: false, error: "Invalid specialization(s). Please select from the predefined list." },
-          { status: 400 }
-        );
-      }
     }
 
     let token: string;
