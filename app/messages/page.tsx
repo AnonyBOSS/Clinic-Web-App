@@ -159,7 +159,22 @@ function MessagesContent() {
             });
             if (res.ok) {
                 const data = await res.json();
-                setMessages(data.data || []);
+                const fetchedMessages = data.data || [];
+
+                // Deduplicate by _id to prevent flash duplicates
+                setMessages(prev => {
+                    const existingIds = new Set(prev.map(m => m._id));
+                    const newMessages = fetchedMessages.filter((m: MessageItem) => !existingIds.has(m._id));
+
+                    // If server has all messages we have plus new ones, use server data
+                    // This handles both new messages and ensures consistency
+                    if (fetchedMessages.length >= prev.length) {
+                        return fetchedMessages;
+                    }
+
+                    // Otherwise merge (shouldn't happen normally)
+                    return [...prev, ...newMessages];
+                });
 
                 // Reset unread count for this conversation since messages are now marked as read
                 setConversations(prev =>
@@ -230,8 +245,6 @@ function MessagesContent() {
             });
 
             if (res.ok) {
-                const data = await res.json();
-                setMessages((prev) => [...prev, data.data]);
                 setNewMessage("");
 
                 // Update conversation list
@@ -242,6 +255,9 @@ function MessagesContent() {
                             : c
                     )
                 );
+
+                // Immediately fetch to show the sent message
+                await loadMessages(selectedConversation.userId);
             }
         } catch {
             // ignore

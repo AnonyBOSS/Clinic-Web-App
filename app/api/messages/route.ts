@@ -63,13 +63,16 @@ export async function GET(req: NextRequest) {
         }
 
         // Fetch list of conversations (unique users)
+        // Sort by createdAt first so $last gets the truly latest message
         const sentMessages = await Message.aggregate([
             { $match: { sender: userObjectId } },
+            { $sort: { createdAt: 1 } },
             { $group: { _id: "$receiver", lastMessage: { $last: "$$ROOT" } } }
         ]);
 
         const receivedMessages = await Message.aggregate([
             { $match: { receiver: userObjectId } },
+            { $sort: { createdAt: 1 } },
             { $group: { _id: "$sender", lastMessage: { $last: "$$ROOT" } } }
         ]);
 
