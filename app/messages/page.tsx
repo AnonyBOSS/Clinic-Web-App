@@ -118,12 +118,22 @@ function MessagesContent() {
             setMessages([]);
             // Initial load - mark notifications as read
             loadMessages(selectedConversation.userId, true);
+        } else {
+            setMessages([]);
         }
     }, [selectedConversation]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    // Use ref to track current conversation to prevent race conditions
+    const currentConversationIdRef = useRef<string | null>(null);
+
+    // Keep ref in sync with selected conversation
+    useEffect(() => {
+        currentConversationIdRef.current = selectedConversation?.userId || null;
+    }, [selectedConversation]);
 
     // Auto-refresh messages every 0.5 seconds when a conversation is selected
     useEffect(() => {
@@ -165,20 +175,11 @@ function MessagesContent() {
                 const data = await res.json();
                 const fetchedMessages = data.data || [];
 
-                // Deduplicate by _id to prevent flash duplicates
-                setMessages(prev => {
-                    const existingIds = new Set(prev.map(m => m._id));
-                    const newMessages = fetchedMessages.filter((m: MessageItem) => !existingIds.has(m._id));
-
-                    // If server has all messages we have plus new ones, use server data
-                    // This handles both new messages and ensures consistency
-                    if (fetchedMessages.length >= prev.length) {
-                        return fetchedMessages;
-                    }
-
-                    // Otherwise merge (shouldn't happen normally)
-                    return [...prev, ...newMessages];
-                });
+                // Only update if this is still the current conversation
+                // This prevents race conditions when switching chats quickly
+                if (currentConversationIdRef.current === userId) {
+                    setMessages(fetchedMessages);
+                }
 
                 // Reset unread count for this conversation since messages are now marked as read
                 setConversations(prev =>
