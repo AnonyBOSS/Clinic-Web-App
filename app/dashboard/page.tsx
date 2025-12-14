@@ -154,6 +154,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
 
+    async function updateExpiredAppointments() {
+      try {
+        await fetch("/api/appointments/update-status", {
+          method: "POST",
+          credentials: "include"
+        });
+      } catch {
+        // Ignore - non-critical operation
+      }
+    }
+
     async function load() {
       try {
         const meRes = await fetch("/api/auth/me", {
@@ -170,6 +181,9 @@ export default function DashboardPage() {
         const meJson = await meRes.json();
         const me = meJson.data as CurrentUser;
         setUser(me);
+
+        // Update expired appointments before fetching the list
+        await updateExpiredAppointments();
 
         const apptRes = await fetch("/api/appointments", {
           credentials: "include"
@@ -218,6 +232,45 @@ export default function DashboardPage() {
 
     load();
   }, []);
+
+  // Auto-update expired appointments every minute
+  useEffect(() => {
+    if (!user) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const updateRes = await fetch("/api/appointments/update-status", {
+          method: "POST",
+          credentials: "include"
+        });
+
+        if (updateRes.ok) {
+          const data = await updateRes.json();
+          // If any appointments were updated, refresh the list
+          if (data.data?.updatedCount > 0) {
+            const apptRes = await fetch("/api/appointments", {
+              credentials: "include"
+            });
+            if (apptRes.ok) {
+              const apptJson = await apptRes.json();
+              const list = (apptJson.data as AppointmentItem[]) ?? [];
+              const sorted = [...list].sort((a, b) => {
+                const da = parseDate(a.slot?.date, a.slot?.time);
+                const db = parseDate(b.slot?.date, b.slot?.time);
+                if (!da || !db) return 0;
+                return da.getTime() - db.getTime();
+              });
+              setAppointments(sorted);
+            }
+          }
+        }
+      } catch {
+        // Ignore - non-critical periodic check
+      }
+    }, 60000); // Every minute
+
+    return () => clearInterval(intervalId);
+  }, [user]);
 
   const todayStr = useMemo(() => {
     const d = new Date();

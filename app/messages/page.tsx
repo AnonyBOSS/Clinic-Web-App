@@ -122,6 +122,36 @@ function MessagesContent() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // Auto-refresh messages every 0.5 seconds when a conversation is selected
+    useEffect(() => {
+        if (!selectedConversation) return;
+
+        const intervalId = setInterval(() => {
+            loadMessages(selectedConversation.userId);
+        }, 500);
+
+        return () => clearInterval(intervalId);
+    }, [selectedConversation]);
+
+    // Auto-refresh conversations list every 10 seconds
+    useEffect(() => {
+        if (!user) return;
+
+        const intervalId = setInterval(async () => {
+            try {
+                const convRes = await fetch("/api/messages", { credentials: "include" });
+                if (convRes.ok) {
+                    const convData = await convRes.json();
+                    setConversations(convData.data || []);
+                }
+            } catch {
+                // ignore
+            }
+        }, 10000);
+
+        return () => clearInterval(intervalId);
+    }, [user]);
+
     async function loadMessages(userId: string) {
         try {
             const res = await fetch(`/api/messages?withUser=${userId}`, {
