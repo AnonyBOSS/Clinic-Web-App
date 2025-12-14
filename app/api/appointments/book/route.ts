@@ -4,6 +4,7 @@ import { Appointment } from '@/models/Appointment';
 import { Slot } from '@/models/Slot';
 import { Payment } from '@/models/Payment';
 import { getAuthUserFromRequest } from '@/lib/auth-request';
+import { validateObjectId, isTodayOrFuture } from '@/lib/validators';
 // Import referenced models for populate()
 import '@/models/Doctor';
 import '@/models/Clinic';
@@ -46,6 +47,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate ObjectId formats
+    if (!validateObjectId(doctor_id) || !validateObjectId(clinic_id) ||
+      !validateObjectId(slot_id) || !validateObjectId(room_id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid ID format in request' },
+        { status: 400 }
+      );
+    }
+
     // Atomically update slot to prevent race conditions
     const updatedSlot = await Slot.findOneAndUpdate(
       { _id: slot_id, status: 'available' },
@@ -56,6 +66,16 @@ export async function POST(req: NextRequest) {
     if (!updatedSlot) {
       return NextResponse.json(
         { success: false, error: 'Slot is no longer available' },
+        { status: 400 }
+      );
+    }
+
+    // Validate that slot date is not in the past
+    if (!isTodayOrFuture(updatedSlot.date)) {
+      // Revert the slot status since we can't book past dates
+      await Slot.findByIdAndUpdate(slot_id, { status: 'available' });
+      return NextResponse.json(
+        { success: false, error: 'Cannot book appointments in the past' },
         { status: 400 }
       );
     }

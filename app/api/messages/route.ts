@@ -8,6 +8,7 @@ import { Notification } from "@/models/Notification";
 import { Doctor } from "@/models/Doctor";
 import { Patient } from "@/models/Patient";
 import { Appointment } from "@/models/Appointment";
+import { validateObjectId } from "@/lib/validators";
 
 // GET: Fetch conversation with a specific user
 export async function GET(req: NextRequest) {
@@ -29,6 +30,13 @@ export async function GET(req: NextRequest) {
         const userObjectId = new mongoose.Types.ObjectId(authUser.id);
 
         if (withUserId) {
+            // Validate ObjectId format
+            if (!validateObjectId(withUserId)) {
+                return NextResponse.json(
+                    { success: false, error: "Invalid user ID format." },
+                    { status: 400 }
+                );
+            }
             const withUserObjectId = new mongoose.Types.ObjectId(withUserId);
 
             // Fetch conversation with specific user
@@ -145,6 +153,14 @@ export async function POST(req: NextRequest) {
         if (!receiverId || !receiverType || !content?.trim()) {
             return NextResponse.json(
                 { success: false, error: "receiverId, receiverType, and content are required." },
+                { status: 400 }
+            );
+        }
+
+        // Validate receiverId is a valid ObjectId
+        if (!validateObjectId(receiverId)) {
+            return NextResponse.json(
+                { success: false, error: "Invalid receiver ID format." },
                 { status: 400 }
             );
         }
