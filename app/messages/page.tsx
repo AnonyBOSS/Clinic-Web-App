@@ -114,7 +114,10 @@ function MessagesContent() {
 
     useEffect(() => {
         if (selectedConversation) {
-            loadMessages(selectedConversation.userId);
+            // Clear old messages immediately when switching chats
+            setMessages([]);
+            // Initial load - mark notifications as read
+            loadMessages(selectedConversation.userId, true);
         }
     }, [selectedConversation]);
 
@@ -127,7 +130,8 @@ function MessagesContent() {
         if (!selectedConversation) return;
 
         const intervalId = setInterval(() => {
-            loadMessages(selectedConversation.userId);
+            // Polling - don't mark notifications (already marked on selection)
+            loadMessages(selectedConversation.userId, false);
         }, 500);
 
         return () => clearInterval(intervalId);
@@ -152,7 +156,7 @@ function MessagesContent() {
         return () => clearInterval(intervalId);
     }, [user]);
 
-    async function loadMessages(userId: string) {
+    async function loadMessages(userId: string, shouldMarkNotifications: boolean = false) {
         try {
             const res = await fetch(`/api/messages?withUser=${userId}`, {
                 credentials: "include"
@@ -180,9 +184,30 @@ function MessagesContent() {
                 setConversations(prev =>
                     prev.map(c => c.userId === userId ? { ...c, unreadCount: 0 } : c)
                 );
+
+                // Mark notifications from this sender as read (only on initial load, not polling)
+                if (shouldMarkNotifications) {
+                    markSenderNotificationsRead(userId);
+                }
             }
         } catch {
             // ignore
+        }
+    }
+
+    // Mark message notifications from a specific sender as read
+    async function markSenderNotificationsRead(senderId: string) {
+        try {
+            await fetch("/api/notifications", {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    markSenderMessagesRead: { senderId }
+                })
+            });
+        } catch {
+            // ignore - non-critical
         }
     }
 
