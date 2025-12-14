@@ -8,6 +8,8 @@ import {
   validateEmail,
   validatePassword,
   nonEmptyString,
+  validatePhone,
+  validateSpecializations,
 } from "@/lib/validators";
 
 type RegisterBody = {
@@ -48,6 +50,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!validatePhone(phone)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid phone number format. Please use Egyptian phone format (e.g., 01xxxxxxxxx)." },
+        { status: 400 }
+      );
+    }
+
     if (!validateEmail(email)) {
       return NextResponse.json(
         { success: false, error: "Invalid email." },
@@ -75,17 +84,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate specializations for doctors
+    if (role === "DOCTOR" && specializations.length > 0) {
+      if (!validateSpecializations(specializations)) {
+        return NextResponse.json(
+          { success: false, error: "Invalid specialization(s). Please select from the predefined list." },
+          { status: 400 }
+        );
+      }
+    }
+
     let token: string;
     let responseUser:
       | {
-          id: string;
-          full_name: string;
-          email: string;
-          phone: string;
-          role: UserRole;
-          qualifications?: string;
-          specializations?: string[];
-        }
+        id: string;
+        full_name: string;
+        email: string;
+        phone: string;
+        role: UserRole;
+        qualifications?: string;
+        specializations?: string[];
+      }
       | undefined;
 
     // 👇 Branch by role so TS knows what type we have

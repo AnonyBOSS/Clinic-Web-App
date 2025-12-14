@@ -140,6 +140,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelLoadingId, setCancelLoadingId] = useState<string | null>(null);
+  const [completeLoadingId, setCompleteLoadingId] = useState<string | null>(null);
 
   // Reschedule state
   const [rescheduleModalAppt, setRescheduleModalAppt] = useState<AppointmentItem | null>(null);
@@ -346,6 +347,35 @@ export default function DashboardPage() {
       console.error("Cancel request failed", err);
     } finally {
       setCancelLoadingId(null);
+    }
+  }
+
+  async function handleComplete(appointmentId: string) {
+    setCompleteLoadingId(appointmentId);
+    try {
+      const res = await fetch(`/api/appointments/${appointmentId}/complete`, {
+        method: "POST",
+        credentials: "include"
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setError(data?.error ?? "Failed to complete appointment.");
+        return;
+      }
+
+      setAppointments((prev) =>
+        prev.map((a) =>
+          a._id === appointmentId
+            ? { ...a, status: "COMPLETED" as const }
+            : a
+        )
+      );
+    } catch (err) {
+      setError("Network error while completing appointment.");
+      console.error("Complete request failed", err);
+    } finally {
+      setCompleteLoadingId(null);
     }
   }
 
@@ -602,6 +632,18 @@ export default function DashboardPage() {
                               isLoading={cancelLoadingId === appt._id}
                             >
                               {t.common.cancel}
+                            </Button>
+                          )}
+
+                          {/* Complete button for doctors */}
+                          {!isPatient && (appt.status === "BOOKED" || appt.status === "CONFIRMED") && (
+                            <Button
+                              size="sm"
+                              variant="gradient"
+                              onClick={() => handleComplete(appt._id)}
+                              isLoading={completeLoadingId === appt._id}
+                            >
+                              ✓ Complete
                             </Button>
                           )}
                         </div>
