@@ -1,6 +1,6 @@
 // lib/auth-request.ts
 import type { NextRequest } from "next/server";
-import { TokenPayload, verifyToken } from "./auth";
+import { TokenPayload, verifyToken, UserRole } from "./auth";
 
 export type AuthUser = TokenPayload;
 
@@ -19,5 +19,9 @@ export function getAuthUserFromRequest(req: NextRequest): AuthUser | null {
   if (!token) return null;
 
   const payload = verifyToken(token);
+  if (payload) {
+    // Normalize role to uppercase for consistency
+    payload.role = payload.role?.toUpperCase() as UserRole;
+  }
   return payload ?? null;
 }
