@@ -277,6 +277,9 @@ export const translations = {
             selectRating: "Please select a rating",
             reviewPlaceholder: "Your review (optional)",
             ratingsCount: "ratings",
+            editRating: "Edit",
+            deleteRating: "Delete",
+            confirmDeleteRating: "Are you sure you want to delete this rating?",
         },
 
         // Profile
@@ -834,6 +837,9 @@ export const translations = {
             selectRating: "يرجى اختيار تقييم",
             reviewPlaceholder: "تقييمك (اختياري)",
             ratingsCount: "تقييمات",
+            editRating: "تعديل",
+            deleteRating: "حذف",
+            confirmDeleteRating: "هل أنت متأكد أنك تريد حذف هذا التقييم؟",
         },
 
         // Profile

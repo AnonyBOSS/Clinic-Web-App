@@ -163,3 +163,123 @@ export async function GET(req: NextRequest) {
         );
     }
 }
+
+// PATCH - Update an existing rating
+export async function PATCH(req: NextRequest) {
+    try {
+        await connectDB();
+        const authUser = getAuthUserFromRequest(req);
+
+        if (!authUser || authUser.role !== "PATIENT") {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized - patients only" },
+                { status: 401 }
+            );
+        }
+
+        const body = await req.json().catch(() => null);
+        const { ratingId, rating, review } = body || {};
+
+        if (!ratingId) {
+            return NextResponse.json(
+                { success: false, error: "Rating ID is required" },
+                { status: 400 }
+            );
+        }
+
+        if (!rating || rating < 1 || rating > 5) {
+            return NextResponse.json(
+                { success: false, error: "Rating must be between 1 and 5" },
+                { status: 400 }
+            );
+        }
+
+        // Find the rating and verify ownership
+        const existingRating = await DoctorRating.findById(ratingId);
+        if (!existingRating) {
+            return NextResponse.json(
+                { success: false, error: "Rating not found" },
+                { status: 404 }
+            );
+        }
+
+        if (String(existingRating.patient) !== authUser.id) {
+            return NextResponse.json(
+                { success: false, error: "You can only edit your own ratings" },
+                { status: 403 }
+            );
+        }
+
+        // Update the rating
+        existingRating.rating = Math.round(rating);
+        existingRating.review = review?.trim() || undefined;
+        await existingRating.save();
+
+        return NextResponse.json({
+            success: true,
+            message: "Rating updated successfully",
+            data: existingRating
+        });
+    } catch (error) {
+        console.error("[RATING_UPDATE_ERROR]", error);
+        return NextResponse.json(
+            { success: false, error: "Failed to update rating" },
+            { status: 500 }
+        );
+    }
+}
+
+// DELETE - Delete an existing rating
+export async function DELETE(req: NextRequest) {
+    try {
+        await connectDB();
+        const authUser = getAuthUserFromRequest(req);
+
+        if (!authUser || authUser.role !== "PATIENT") {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized - patients only" },
+                { status: 401 }
+            );
+        }
+
+        const { searchParams } = new URL(req.url);
+        const ratingId = searchParams.get("ratingId");
+
+        if (!ratingId) {
+            return NextResponse.json(
+                { success: false, error: "Rating ID is required" },
+                { status: 400 }
+            );
+        }
+
+        // Find the rating and verify ownership
+        const existingRating = await DoctorRating.findById(ratingId);
+        if (!existingRating) {
+            return NextResponse.json(
+                { success: false, error: "Rating not found" },
+                { status: 404 }
+            );
+        }
+
+        if (String(existingRating.patient) !== authUser.id) {
+            return NextResponse.json(
+                { success: false, error: "You can only delete your own ratings" },
+                { status: 403 }
+            );
+        }
+
+        // Delete the rating
+        await DoctorRating.findByIdAndDelete(ratingId);
+
+        return NextResponse.json({
+            success: true,
+            message: "Rating deleted successfully"
+        });
+    } catch (error) {
+        console.error("[RATING_DELETE_ERROR]", error);
+        return NextResponse.json(
+            { success: false, error: "Failed to delete rating" },
+            { status: 500 }
+        );
+    }
+}

@@ -138,7 +138,7 @@ export default function ProfilePage() {
   }
 
   async function handleDeleteRating(ratingId: string) {
-    if (!confirm("Are you sure you want to delete this rating?")) return;
+    if (!confirm(t.ratings.confirmDeleteRating)) return;
     try {
       const res = await fetch(`/api/ratings?ratingId=${ratingId}`, {
         method: "DELETE",
@@ -445,10 +445,10 @@ export default function ProfilePage() {
             <div className="text-center py-8">
               <div className="text-4xl mb-3">⭐</div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                You haven&apos;t rated any doctors yet.
+                {t.ratings.noRatingsYet}
               </p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                Complete an appointment to leave a review!
+                {t.ratings.completeToRate}
               </p>
             </div>
           ) : (
@@ -541,14 +541,14 @@ export default function ProfilePage() {
                             setEditReviewValue(rating.review || "");
                           }}
                         >
-                          Edit
+                          {t.ratings.editRating}
                         </Button>
                         <Button
                           size="xs"
                           variant="destructive"
                           onClick={() => handleDeleteRating(rating._id)}
                         >
-                          Delete
+                          {t.ratings.deleteRating}
                         </Button>
                       </div>
                     </div>
