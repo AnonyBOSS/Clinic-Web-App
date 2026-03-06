@@ -79,4 +79,41 @@ export function isTodayOrFuture(date: string): boolean {
   return checkDate >= today;
 }
 
+/**
+ * Sanitizes user input by trimming whitespace and removing
+ * potentially dangerous HTML/script tags.
+ */
+export function sanitizeInput(input: string): string {
+  return input
+    .trim()
+    .replace(/<[^>]*>/g, "")       // strip HTML tags
+    .replace(/[<>]/g, "");          // remove stray angle brackets
+}
 
+/**
+ * Sanitizes and normalizes an email address.
+ * Trims whitespace and converts to lowercase.
+ */
+export function sanitizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/**
+ * Validates password strength beyond minimum length.
+ * Returns an object with validity status and feedback message.
+ */
+export function validatePasswordStrength(password: string): {
+  valid: boolean;
+  message: string;
+} {
+  if (password.length < 6) {
+    return { valid: false, message: "Password must be at least 6 characters." };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: "Password must contain at least one uppercase letter." };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: "Password must contain at least one number." };
+  }
+  return { valid: true, message: "Password is strong." };
+}
