@@ -2,6 +2,8 @@
 
 A full-stack clinic appointment booking platform built with **Next.js 14+ (App Router)**, **TypeScript**, **MongoDB**, and **Tailwind CSS**. The system supports both patients and doctors with a unified dashboard experience.
 
+**Live demo:** [clinic-web-app-two.vercel.app](https://clinic-web-app-two.vercel.app/) · **Mobile app:** [Clinify-mobile-app](https://github.com/AnonyBOSS/Clinify-mobile-app) (React Native client for this same API)
+
 ## ✨ Features
 
 ### For Patients
@@ -29,7 +31,7 @@ A full-stack clinic appointment booking platform built with **Next.js 14+ (App R
 - 🌗 **Dark Mode** — System-wide dark mode toggle
 - 🌍 **Internationalization (i18n)** — Full English and Arabic language support with RTL layout
 - 🤖 **AI Symptom Checker** — Groq-powered AI that analyzes symptoms and suggests specialists
-- 💬 **Real-time Messaging** — Doctor-patient chat system with notifications
+- 💬 **Live Messaging** — Doctor-patient chat that polls for new messages every 0.5 s, with notifications
 - 🔔 **Notifications** — In-app notification system for appointments and messages
 - ⭐ **Doctor Ratings** — Patients can rate and review doctors after appointments
 - ⚛️ **Atomic Booking** — Race-condition-safe slot reservation using MongoDB atomic updates
